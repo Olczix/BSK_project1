@@ -7,83 +7,50 @@ from cryptography.hazmat import backends
 def createCipherClass(algorithm, mode, key, init_vector=None):
     if algorithm == 'AES':
         if mode == 'ECB':
-            return Cipher_AES_EBC(key)
+            mode = modes.ECB()
         if mode == 'CBC':
-            return Cipher_AES_CBC(key, init_vector)
+            mode = modes.CBC(init_vector)
         if mode == 'CFB':
-            return Cipher_AES_CFB(key,init_vector)
+            mode = modes.CFB(init_vector)
         if mode == 'OFB':
-            return Cipher_AES_OFB(key,init_vector)
+            mode = modes.OFB(init_vector)
+        return Cipher_AES(key, mode)
 
 class Cipher_AES:
-    def __init__(self, cipher):
+    def __init__(self, key, mode):
+        cipher = Cipher(algorithms.AES(key), mode, backends.default_backend())
         self.encryptor = cipher.encryptor()
         self.decryptor = cipher.decryptor()
-        self.secret_message = ""
+        self.padder = padding.ANSIX923(algorithms.AES.block_size).padder()
+        self.unpadder = padding.ANSIX923(algorithms.AES.block_size).unpadder()
         
-    def encrypt(self, message):
-        self.secret_message = self.encryptor.update(message) + self.encryptor.finalize()
+    def encrypt_text(self, message):
+        message = self.padder.update(message) + self.padder.finalize()
+        return self.encryptor.update(message) + self.encryptor.finalize()
         
-    def decrypt(self):
-        self.secret_message = self.decryptor.update(self.secret_message) + self.decryptor.finalize()
+    def decrypt_text(self, encrypted_message):
+        encrypted_message = self.decryptor.update(encrypted_message) + self.decryptor.finalize()
+        return self.unpadder.update(encrypted_message) + self.unpadder.finalize()
+        
+    def encrypt_file(self, path):
+        with open(path, 'rb') as file: 
+            message = file.read() 
+        
+        encrypted_message = self.encrypt_text(message)
+        
+        with open(path, 'wb') as encrypted_file: 
+            encrypted_file.write(encrypted_message) 
+        
+    def decrypt_file(self, path):
+        with open(path, 'rb') as encrypted_file: 
+            encrypted_message = encrypted_file.read() 
+  
+        decrypted_message = self.decrypt_text(encrypted_message)
 
-class Cipher_AES_EBC(Cipher_AES):
-    def __init__(self, key):
-        cipher = Cipher(algorithms.AES(key), modes.ECB(), backends.default_backend())
-        self.padder = padding.PKCS7(algorithms.AES.block_size).padder()
-        self.unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
-        super().__init__(cipher)
-        
-    def encrypt(self, message):
-        padded_message = self.padder.update(message) + self.padder.finalize()
-        super().encrypt(padded_message)
-        
-    def decrypt(self):
-        super().decrypt()
-        self.secret_message = self.unpadder.update(self.secret_message) + self.unpadder.finalize()
-
-class Cipher_AES_CBC(Cipher_AES):
-    def __init__(self, key, init_vector):
-        cipher = Cipher(algorithms.AES(key), modes.CBC(init_vector), backends.default_backend())
-        self.padder = padding.PKCS7(algorithms.AES.block_size).padder()
-        self.unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
-        super().__init__(cipher)      
-        
-    def encrypt(self, message):
-        padded_message = self.padder.update(message) + self.padder.finalize()
-        super().encrypt(padded_message)
-        
-    def decrypt(self):
-        super().decrypt()
-        self.secret_message = self.unpadder.update(self.secret_message) + self.unpadder.finalize()
-
-class Cipher_AES_CFB(Cipher_AES):
-    def __init__(self, key, init_vector):
-        cipher = Cipher(algorithms.AES(key), modes.CFB(init_vector), backends.default_backend())
-        super().__init__(cipher)
-        
-    def encrypt(self, message):
-        super().encrypt(message)
-        
-    def decrypt(self):
-        super().decrypt()
-
-class Cipher_AES_OFB(Cipher_AES):
-    def __init__(self, key, init_vector):
-        cipher = Cipher(algorithms.AES(key), modes.OFB(init_vector), backends.default_backend())
-        super().__init__(cipher)
-        
-    def encrypt(self, message):
-        super().encrypt(message)
-        
-    def decrypt(self):
-        super().decrypt()
+        with open(path, 'wb') as decrypted_file: 
+            decrypted_file.write(decrypted_message)
 
 if __name__ == '__main__':
     key = os.urandom(32)
     init_vector = os.urandom(16)
-    e = createCipherClass('AES', 'ECB', key, init_vector)
-    e.encrypt(b'Ala ma kota samolota')
-    e.decrypt()
-    
-
+    e = createCipherClass('AES', 'OFB', key, init_vector)
