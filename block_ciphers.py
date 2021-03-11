@@ -49,8 +49,3 @@ class Cipher_AES:
 
         with open(path, 'wb') as decrypted_file: 
             decrypted_file.write(decrypted_message)
-
-if __name__ == '__main__':
-    key = os.urandom(32)
-    init_vector = os.urandom(16)
-    e = createCipherClass('AES', 'OFB', key, init_vector)
