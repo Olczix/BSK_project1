@@ -24,7 +24,8 @@ class Connection:
         try:
             destination_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             destination_socket.connect((config.ADDRESS, config.PORT))
-            destination_socket.send(message.encode('utf-8'))
+            # destination_socket.send(message.encode('utf-8'))
+            destination_socket.send(message)
             destination_socket.close()
         except:
             if self.connection == 0:
