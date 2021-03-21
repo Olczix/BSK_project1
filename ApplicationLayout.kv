@@ -1,4 +1,4 @@
-screenManager: 
+ScreenManager:
     loginScreen: 
     signupScreen: 
     chooserSenderScreen:
@@ -34,7 +34,7 @@ screenManager:
             size_hint : 0.3, 0.1
             pos_hint : {"x" : 0.39, "top" : 0.4} 
             on_release:  
-                root.validate() 
+                root.login_btn_clicked()
                 root.manager.transition.direction = "up"
         Button: 
             text : "Create an account"
@@ -81,7 +81,7 @@ screenManager:
             size_hint : 0.3, 0.1
             pos_hint : {"x" : 0.39, "top" : 0.28} 
             on_press : 
-                root.create_account_pbtn() 
+                root.create_account_btn_clicked()
                 root.manager.transition.direction = "right"
   
 <chooserSenderScreen>:
@@ -116,7 +116,6 @@ screenManager:
    
 <messageSenderScreen>:
     message : message
-    init_vector : init_vector
     GridLayout:
         cols: 2
 
@@ -153,12 +152,6 @@ screenManager:
             group: "block_encoding"
             on_press: root.set_block_encoding_choice(self, self.active, "OFB")
         Label:
-            id : info 
-            text : "TYPE INITIALIZING VECTOR - 16 digits\n(not required for ECB):"
-        TextInput: 
-            id : init_vector
-            multiline : False
-        Label:
             id : info
             text : " "
         Button:
@@ -191,6 +184,65 @@ screenManager:
             size_hint : 0.8, 0.2
             pos_hint : {"x" : 0.15, "top" : 0.4}
             font_size:25
+
+<fileSenderScreen>:
+    GridLayout:
+        cols: 2
+
+        Label:
+            id : info
+            text : "CHOOSE FILE:"
+        Button:
+            id : file_chooser
+            text: 'Click to choose a file'
+            on_release:
+                root.run_file_chooser_app()
+        Label:
+            id : info
+            text : "CHOOSE BLOCK ENCODING:"
+        Label:
+            id : info
+            text : " "
+        Label:
+            text: "ECB"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "ECB")
+        Label:
+            text: "CBC"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "CBC")
+        Label:
+            text: "CFB"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "CFB")
+        Label:
+            text: "OFB"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "OFB")
+        Label:
+            id : info
+            text : " "
+        Button:
+            text : "Send message"
+            size_hint : 0.4, 0.1
+            pos_hint : {"x" : 0.15, "top" : 0.2}
+            on_release:
+                root.send()
+                app.root.current = 'chooser_screen'
+                root.manager.transition.direction = "left"
+
+<fileChooserWidget>:
+    id: my_widget
+    Button
+        text: "open"
+        on_release: my_widget.open(filechooser.path, filechooser.selection)
+    FileChooserListView:
+        id: filechooser
+        on_selection: my_widget.selected(filechooser.selection)
 
 <errorInvalidInformation>:
     Label: 
