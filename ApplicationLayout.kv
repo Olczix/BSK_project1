@@ -1,0 +1,302 @@
+ScreenManager:
+    loginScreen: 
+    signupScreen: 
+    chooserSenderScreen:
+    messageSenderScreen:
+    fileSenderScreen:
+    sessionKeyGeneratorScreen:
+  
+<loginScreen>: 
+    login : login
+    password : password
+    FloatLayout: 
+        size: root.width, root.height 
+        Label: 
+            text : "LOGIN: "
+            size_hint : 0.2, 0.1
+            pos_hint : {"x" : 0.25, "top" : 0.9} 
+        TextInput: 
+            id : login 
+            multiline :False
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.45, "top" : 0.9} 
+        Label: 
+            text : "PASSWORD: "
+            size_hint : 0.2, 0.1
+            pos_hint : {"x" : 0.25, "top" : 0.7}
+        TextInput: 
+            id : password
+            multiline :False
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.45, "top" : 0.7}
+        Button: 
+            text : "LOGIN"
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.39, "top" : 0.4} 
+            on_release:  
+                root.login_btn_clicked()
+                root.manager.transition.direction = "up"
+        Button: 
+            text : "Create an account"
+            size_hint : 0.4, 0.1
+            pos_hint : {"x" : 0.33, "top" : 0.2} 
+            on_release:  
+                app.root.current = 'signup_screen'
+                root.manager.transition.direction = "left"
+
+<signupScreen>: 
+    login : login
+    password : password
+    repeat_password : repeat_password
+    FloatLayout: 
+        Label: 
+            text : "NAME: "
+            size_hint : 0.2, 0.1
+            pos_hint : {"x" : 0.25, "top" : 0.9} 
+        TextInput: 
+            id : login
+            multiline : False
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.45, "top" : 0.9} 
+        Label: 
+            text : "PASSWORD: "
+            size_hint : 0.2, 0.1
+            pos_hint : {"x" : 0.25, "top" : 0.7} 
+        TextInput: 
+            id : password
+            multiline : False
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.45, "top" : 0.7}
+        Label: 
+            text : "REPEAT PASSWORD: "
+            size_hint : 0.2, 0.1
+            pos_hint : {"x" : 0.25, "top" : 0.5} 
+        TextInput: 
+            id : repeat_password 
+            multiline : False
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.45, "top" : 0.5} 
+        Button: 
+            text : "SUBMIT"
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.39, "top" : 0.28} 
+            on_press : 
+                root.create_account_btn_clicked()
+                root.manager.transition.direction = "right"
+  
+<chooserSenderScreen>:
+    info : info 
+    FloatLayout: 
+        Label: 
+            id : info 
+            size_hint : 0.8, 0.2
+            pos_hint : {"x" : 0.15, "top" : 0.9} 
+            text : "WHAT DO YOU WANT TO DO?"
+        Button:
+            text : "Send message"
+            size_hint : 0.4, 0.1
+            pos_hint : {"x" : 0.33, "top" : 0.65}
+            on_release:
+                app.root.current = 'message_sender_screen'
+                root.manager.transition.direction = "right"
+        Button:
+            text : "Send file"
+            size_hint : 0.4, 0.1
+            pos_hint : {"x" : 0.33, "top" : 0.5}
+            on_release:
+                app.root.current = 'file_sender_screen'
+                root.manager.transition.direction = "right"
+        Button:
+            text : "Generate session key"
+            size_hint : 0.4, 0.1
+            pos_hint : {"x" : 0.33, "top" : 0.35}
+            on_release:
+                app.root.current = 'session_key_generator_screen'
+                root.manager.transition.direction = "right"
+   
+<messageSenderScreen>:
+    message : message
+    GridLayout:
+        cols: 2
+
+        Label: 
+            id : info 
+            text : "TYPE MESSAGE:"
+        TextInput: 
+            id : message
+            multiline : False
+        Label:
+            id : info
+            text : "CHOOSE BLOCK ENCODING:"
+        Label:
+            id : info
+            text : " "
+        Label:
+            text: "ECB"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "ECB")
+        Label:
+            text: "CBC"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "CBC")
+        Label:
+            text: "CFB"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "CFB")
+        Label:
+            text: "OFB"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "OFB")
+        Label:
+            id : info
+            text : " "
+        Button:
+            text : "Send message"
+            size_hint : 0.4, 0.1
+            pos_hint : {"x" : 0.15, "top" : 0.2}
+            on_release:
+                root.send()
+                app.root.current = 'chooser_screen'
+                root.manager.transition.direction = "left"
+
+<sessionKeyGeneratorScreen>:
+    FloatLayout:
+        Label:
+            id : info
+            text : 'CLICK BUTTON AND START MOVING YOUR MOUSE \nOVER APPLICATION WINDOW FOR 5 SECONDS TO\nGENERATE SESSION KEY'
+            halign: 'left'
+            size_hint : 0.8, 0.2
+            pos_hint : {"x" : 0.15, "top" : 0.8}
+        Button:
+            text : "Start!"
+            size_hint : 0.4, 0.1
+            pos_hint : {"x" : 0.33, "top" : 0.55}
+            on_release:
+                root.handle_session_key_generation()
+                app.root.current = 'chooser_screen'
+                root.manager.transition.direction = "left"
+        Label:
+            text : root.time_left
+            size_hint : 0.8, 0.2
+            pos_hint : {"x" : 0.15, "top" : 0.4}
+            font_size:25
+
+<fileSenderScreen>:
+    GridLayout:
+        cols: 2
+
+        Label:
+            id : info
+            text : "CHOOSE FILE:"
+        Button:
+            id : file_chooser
+            text: 'Click to choose a file'
+            on_release:
+                root.run_file_chooser_app()
+        Label:
+            id : info
+            text : "CHOOSE BLOCK ENCODING:"
+        Label:
+            id : info
+            text : " "
+        Label:
+            text: "ECB"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "ECB")
+        Label:
+            text: "CBC"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "CBC")
+        Label:
+            text: "CFB"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "CFB")
+        Label:
+            text: "OFB"
+        CheckBox:
+            group: "block_encoding"
+            on_press: root.set_block_encoding_choice(self, self.active, "OFB")
+        Label:
+            id : info
+            text : " "
+        Button:
+            text : "Send message"
+            size_hint : 0.4, 0.1
+            pos_hint : {"x" : 0.15, "top" : 0.2}
+            on_release:
+                root.send()
+                app.root.current = 'chooser_screen'
+                root.manager.transition.direction = "left"
+
+<errorInvalidInformation>:
+    Label: 
+        text : "Please, enter valid information!"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<errorSessionKey>:
+    Label:
+        text : "Error while generating session key"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<successLogIn>:
+    Label:
+        text : "Logged in successfully"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<successSignIn>:
+    Label:
+        text : "Registered successfully :)"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<success>:
+    Label: 
+        text : "Action finished successfully"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<successSessionKey>:
+    Label:
+        text : "Session key generated successfully"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+        
+<errorUnknownUser>:
+    Label:
+        text : "Please, check your credentials\nand try again"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<errorUserExists>:
+    Label:
+        text : "User with this login exists.\nPlease, choose different login"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<chosenFileConfirmation>:
+    Label:
+        text : "Great choice! :)"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<noEncryptionModeSelected>:
+    Label:
+        text : "No enryption mode selected!\nPlease, select one before sending!"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<noFileSelected>:
+    Label:
+        text : "No file selected!\nPlease, select one before sending!"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}

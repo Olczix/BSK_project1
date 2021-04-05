@@ -3,7 +3,7 @@ import socket
 import threading
 
 
-class Connection:
+class NetworkConnection:
     def __init__(self):
         (self.connection, self.address) = (0, 0)
 
@@ -24,7 +24,8 @@ class Connection:
         try:
             destination_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             destination_socket.connect((config.ADDRESS, config.PORT))
-            destination_socket.send(message.encode('utf-8'))
+            # destination_socket.send(message.encode('utf-8'))
+            destination_socket.send(message)
             destination_socket.close()
         except:
             if self.connection == 0:
@@ -39,4 +40,4 @@ class ListenningThread(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        Connection().listen()
+        NetworkConnection().listen()

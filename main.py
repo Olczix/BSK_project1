@@ -1,5 +1,6 @@
 import connection
+from gui import CryptoApplicationMain
+
 
 if __name__ == "__main__":
-    connection.ListenningThread().start()
-    connection.Connection()
+    CryptoApplicationMain().run()
