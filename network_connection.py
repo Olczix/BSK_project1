@@ -3,7 +3,7 @@ import socket
 import threading
 
 
-class Connection:
+class NetworkConnection:
     def __init__(self):
         (self.connection, self.address) = (0, 0)
 
@@ -40,4 +40,4 @@ class ListenningThread(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        Connection().listen()
+        NetworkConnection().listen()

@@ -1,7 +1,7 @@
 from plyer import filechooser
 import crypto_stuff
 import pandas as pd
-import connection
+import network_connection
 import pyautogui
 import pop_ups
 import getmac
@@ -70,7 +70,7 @@ def send_message(message, encryption_mode):
                                           key=current_user.get_session_key(),
                                           init_vector=init_vector)
     encrypted_message = e.encrypt_text(message.encode('utf-8'))
-    connection.Connection().send(encrypted_message)
+    network_connection.NetworkConnection().send(encrypted_message)
 
 
 def generate_session_key():

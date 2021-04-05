@@ -8,7 +8,7 @@ from pop_ups import PopUpMode, popUp
 from kivy.uix.label import Label
 from kivy.lang import Builder
 from kivy.app import App
-import connection
+import network_connection
 import backend
 import time
 import os
@@ -119,5 +119,5 @@ screen_manager.add_widget(sessionKeyGeneratorScreen(name='session_key_generator_
 # Class responsible for handling application start up
 class CryptoApplicationMain(App): 
     def build(self):
-        connection.ListenningThread().start()
+        network_connection.ListenningThread().start()
         return screen_manager
