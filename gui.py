@@ -41,7 +41,7 @@ class signupScreen(Screen):
                                                           password=self.password.text,
                                                           repeat_password=self.repeat_password.text)
 
-        if action_result == pop_ups.PopUpMode.SUCCESS_SIGN_IN:
+        if action_result == PopUpMode.SUCCESS_SIGN_IN:
             screen_manager.current = 'chooser_screen'
             popUp(PopUpMode.SUCCESS_SIGN_IN)
         else:
@@ -70,26 +70,23 @@ class messageSenderScreen(Screen):
         self.message.text = ""
         # add PopUp message about success or failure while sending message
 
-# Class responsible for choosing file to send
-class fileChooserWidget(BoxLayout):
-    def open(self, path, filename):
-        with open(os.path.join(path, filename[0])) as filee:
-            print(filee.read())
-
-    def selected(self, filename):
-        print(f'selected: {filename[0]}')
-
-# Class respinsible for building file chooser Widget
-class fileChooser(App):
-    def build(self):
-        return fileChooserWidget()
-
 # Class responsible for handling files sending
 class fileSenderScreen(Screen):
-    message = ObjectProperty(None)
+    file_path = None
+    encryption_mode = ObjectProperty(None)
+
+    def set_block_encoding_choice(self, instance, value, block_encoding_choice):
+        if value == True:
+            self.encryption_mode = block_encoding_choice
 
     def run_file_chooser_app(self):
-        fileChooser().run()
+        self.file_path = backend.get_chosen_file_path()
+
+    def send(self):
+        if backend.validate_file_sending(path=self.file_path,
+                                         mode=self.encryption_mode):
+            backend.send_file(path=self.file_path, mode=self.encryption_mode)
+
 
 # Class responsible for handling session key generation
 class sessionKeyGeneratorScreen(Screen):

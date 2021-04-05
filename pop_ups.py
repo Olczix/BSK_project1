@@ -11,6 +11,9 @@ class PopUpMode(enum.Enum):
     SUCCESS_SESSION_KEY = 5
     ERROR_UNKNOWN_USER = 6
     ERROR_USER_EXISTS = 7
+    CHOSEN_FILE_CONFIRMATION = 8
+    NO_ENCRYPTION_MODE_SELECTED = 9
+    NO_FILE_SELECTED = 10
 
 class errorInvalidInformation(FloatLayout): 
     pass
@@ -36,10 +39,18 @@ class successSessionKey(FloatLayout):
 class errorUserExists(FloatLayout):
     pass
 
+class chosenFileConfirmation(FloatLayout):
+    pass
 
-def popUp(mode): 
+class noEncryptionModeSelected(FloatLayout):
+    pass
+
+class noFileSelected(FloatLayout):
+    pass
+
+def popUp(mode, extra_info=None):
     show = None
-    info = None
+    info = 'INFO INFO'
     if mode.value == 0:
         info = 'ERROR'
         show = errorInvalidInformation()
@@ -64,6 +75,15 @@ def popUp(mode):
     elif mode.value == 7:
         info = 'ERROR'
         show = errorUserExists()
+    elif mode.value == 8:
+        info = 'ERROR' if extra_info is None else extra_info 
+        show = chosenFileConfirmation()
+    elif mode.value == 9:
+        info = 'ERROR'
+        show = noEncryptionModeSelected()
+    elif mode.value == 10:
+        info = 'ERROR'
+        show = noFileSelected()
     
     window = Popup(title = info, content = show,
                    size_hint = (None, None), size = (350, 150)) 

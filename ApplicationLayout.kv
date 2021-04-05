@@ -235,15 +235,6 @@ ScreenManager:
                 app.root.current = 'chooser_screen'
                 root.manager.transition.direction = "left"
 
-<fileChooserWidget>:
-    id: my_widget
-    Button
-        text: "open"
-        on_release: my_widget.open(filechooser.path, filechooser.selection)
-    FileChooserListView:
-        id: filechooser
-        on_selection: my_widget.selected(filechooser.selection)
-
 <errorInvalidInformation>:
     Label: 
         text : "Please, enter valid information!"
@@ -289,5 +280,23 @@ ScreenManager:
 <errorUserExists>:
     Label:
         text : "User with this login exists.\nPlease, choose different login"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<chosenFileConfirmation>:
+    Label:
+        text : "Great choice! :)"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<noEncryptionModeSelected>:
+    Label:
+        text : "No enryption mode selected!\nPlease, select one before sending!"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<noFileSelected>:
+    Label:
+        text : "No file selected!\nPlease, select one before sending!"
         size_hint : 0.1, 0.1
         pos_hint : {"x" : 0.3, "top" : 0.5}
