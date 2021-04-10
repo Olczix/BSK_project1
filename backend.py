@@ -1,9 +1,11 @@
 from plyer import filechooser
 import crypto_stuff
 import pandas as pd
+from pathlib import Path
 import network_connection
 import pyautogui
 import pop_ups
+import config
 import getmac
 import time
 import re
@@ -64,14 +66,17 @@ def validate_account_creation(login, password, repeat_password):
 
 
 def send_message(message, encryption_mode):
-    init_vector = os.urandom(16) if encryption_mode != 'ECB' else None
-    current_user.set_used_init_vector(init_vector=init_vector)
-    e = crypto_stuff.createAESCipherClass(mode=encryption_mode,
-                                          key=current_user.get_session_key(),
-                                          init_vector=init_vector)
-    encrypted_message = e.encrypt_text(message.encode('utf-8'))
-    network_connection.NetworkConnection().send(encrypted_message)
-
+    if current_user.get_session_key() is None:
+        return pop_ups.PopUpMode.NO_SESSION_KEY_GENERATED
+    else:
+        init_vector = os.urandom(16) if encryption_mode != 'ECB' else None
+        current_user.set_used_init_vector(init_vector=init_vector)
+        e = crypto_stuff.createAESCipherClass(mode=encryption_mode,
+                                            key=current_user.get_session_key(),
+                                            init_vector=init_vector)
+        encrypted_message = e.encrypt_text(message.encode('utf-8'))
+        network_connection.NetworkConnection().send(encrypted_message)
+        return pop_ups.PopUpMode.SUCCESS_MESSAGE_SEND
 
 def generate_session_key():
     bytes_list = []
@@ -102,7 +107,6 @@ def generate_session_key():
 
 def get_chosen_file_path():
     path = filechooser.open_file(title="Select file to send ...")
-    print(path)
     if path is not None:
         pop_ups.popUp(mode=pop_ups.PopUpMode.CHOSEN_FILE_CONFIRMATION,
                       extra_info=f'CHOSEN FILE:\n{path[0]}')
@@ -119,9 +123,38 @@ def validate_file_sending(path, mode):
     return True    
 
 
-def send_file(path, mode):
-    print(path)
-    print(mode)
+def send_file(path, encryption_mode):
+    # na początku jakaś ramka która powiadomi o pliku oraz jego rozszerzeniu
+    # potem pewnie init_vector i encryption_mode w kolejnych ramkach
+    # a potem wysyłanie zaszyfrowanych fragmentów pliku
+
+    # TODO: add 'no session key' verification
+
+    file_type = path.split('.')[-1]
+    print(f'FILE TYPE: {file_type}')
+    file_size_in_bytes = Path(path).stat().st_size
+    print(f'FILE SIZE: {file_size_in_bytes}b')
+
+    with open(path, 'rb') as f:
+        file_content = f.read()
+
+    # big files handling + there is a need to cut it in smaller pieces
+    if file_size_in_bytes > config.PACKAGE_SIZE:
+        chunks = [file_content[i:i+config.PACKAGE_SIZE]
+                  for i in range(0, file_size_in_bytes, config.PACKAGE_SIZE)]
+    else: # small file - only one chunk
+        chunks = file_content
+
+    init_vector = os.urandom(16) if encryption_mode != 'ECB' else None
+    current_user.set_used_init_vector(init_vector=init_vector)
+    e = crypto_stuff.createAESCipherClass(mode=encryption_mode,
+                                          key=current_user.get_session_key(),
+                                          init_vector=init_vector)
+
+    for chunk in chunks:
+        chunk_string = chunk.decode("utf-8")
+        encrypted_chunk = e.encrypt_text(chunk_string.encode('utf-8'))
+        network_connection.NetworkConnection().send(encrypted_chunk)
 
 
 # Getting 'database' of users

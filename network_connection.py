@@ -13,8 +13,8 @@ class NetworkConnection:
         listening_socket.listen(5)
         while True:
             self.connection, self.address = listening_socket.accept()
-            # print(f'Connected with {self.address[0]}')
-            received_msg = self.connection.recv(1024)
+            print(f'Connected with {self.address[0]}')
+            received_msg = self.connection.recv(config.PACKAGE_SIZE)
             if not received_msg:
                 break
             else:

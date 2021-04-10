@@ -1,11 +1,13 @@
-
 from kivy.properties import ObjectProperty, StringProperty
-from kivy.uix.screenmanager import ScreenManager, Screen 
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.progressbar import ProgressBar
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from pop_ups import PopUpMode, popUp
 from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.widget import Widget
 from kivy.lang import Builder
 from kivy.app import App
 import network_connection
@@ -23,7 +25,7 @@ class loginScreen(Screen):
         action_result = backend.validate_login(login=self.login.text, password=self.password.text)
 
         if action_result == PopUpMode.SUCCESS_LOG_IN:
-            screen_manager.current = 'chooser_screen'
+            screen_manager.current = 'menu_screen'
             popUp(PopUpMode.SUCCESS_LOG_IN)
         else:
             popUp(action_result)
@@ -42,7 +44,7 @@ class signupScreen(Screen):
                                                           repeat_password=self.repeat_password.text)
 
         if action_result == PopUpMode.SUCCESS_SIGN_IN:
-            screen_manager.current = 'chooser_screen'
+            screen_manager.current = 'menu_screen'
             popUp(PopUpMode.SUCCESS_SIGN_IN)
         else:
             popUp(action_result)
@@ -51,7 +53,7 @@ class signupScreen(Screen):
             self.repeat_password.text = ''
 
 # Class responsible for handling users choice: send message, send file, generate session key
-class chooserSenderScreen(Screen): 
+class menuScreen(Screen):
     pass
 
 # Class responsible for handling messages sending
@@ -63,12 +65,12 @@ class messageSenderScreen(Screen):
         if value == True:
             self.encryption_mode = block_encoding_choice
 
-    def send(self):
+    def send_message(self):
         # add validation if encryption_mode is empty/None
-        backend.send_message(message=self.message.text,
-                             encryption_mode=self.encryption_mode)
+        action_result = backend.send_message(message=self.message.text,
+                                           encryption_mode=self.encryption_mode)
         self.message.text = ""
-        # add PopUp message about success or failure while sending message
+        popUp(action_result)
 
 # Class responsible for handling files sending
 class fileSenderScreen(Screen):
@@ -82,10 +84,10 @@ class fileSenderScreen(Screen):
     def run_file_chooser_app(self):
         self.file_path = backend.get_chosen_file_path()
 
-    def send(self):
+    def send_file(self):
         if backend.validate_file_sending(path=self.file_path,
                                          mode=self.encryption_mode):
-            backend.send_file(path=self.file_path, mode=self.encryption_mode)
+            backend.send_file(path=self.file_path, encryption_mode=self.encryption_mode)
 
 
 # Class responsible for handling session key generation
@@ -110,7 +112,7 @@ class screenManager(ScreenManager):
 # Creating screen manager for managing all screens of application
 screen_manager = ScreenManager()
 screen_manager.add_widget(loginScreen(name='login_screen'))
-screen_manager.add_widget(chooserSenderScreen(name='chooser_screen'))
+screen_manager.add_widget(menuScreen(name='menu_screen'))
 screen_manager.add_widget(signupScreen(name='signup_screen'))
 screen_manager.add_widget(messageSenderScreen(name='message_sender_screen'))
 screen_manager.add_widget(fileSenderScreen(name='file_sender_screen'))
@@ -119,5 +121,4 @@ screen_manager.add_widget(sessionKeyGeneratorScreen(name='session_key_generator_
 # Class responsible for handling application start up
 class CryptoApplicationMain(App): 
     def build(self):
-        network_connection.ListenningThread().start()
         return screen_manager

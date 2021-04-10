@@ -1,7 +1,7 @@
 ScreenManager:
     loginScreen: 
     signupScreen: 
-    chooserSenderScreen:
+    menuScreen:
     messageSenderScreen:
     fileSenderScreen:
     sessionKeyGeneratorScreen:
@@ -84,7 +84,7 @@ ScreenManager:
                 root.create_account_btn_clicked()
                 root.manager.transition.direction = "right"
   
-<chooserSenderScreen>:
+<menuScreen>:
     info : info 
     FloatLayout: 
         Label: 
@@ -98,21 +98,21 @@ ScreenManager:
             pos_hint : {"x" : 0.33, "top" : 0.65}
             on_release:
                 app.root.current = 'message_sender_screen'
-                root.manager.transition.direction = "right"
+                root.manager.transition.direction = "left"
         Button:
             text : "Send file"
             size_hint : 0.4, 0.1
             pos_hint : {"x" : 0.33, "top" : 0.5}
             on_release:
                 app.root.current = 'file_sender_screen'
-                root.manager.transition.direction = "right"
+                root.manager.transition.direction = "left"
         Button:
             text : "Generate session key"
             size_hint : 0.4, 0.1
             pos_hint : {"x" : 0.33, "top" : 0.35}
             on_release:
                 app.root.current = 'session_key_generator_screen'
-                root.manager.transition.direction = "right"
+                root.manager.transition.direction = "left"
    
 <messageSenderScreen>:
     message : message
@@ -151,16 +151,16 @@ ScreenManager:
         CheckBox:
             group: "block_encoding"
             on_press: root.set_block_encoding_choice(self, self.active, "OFB")
-        Label:
-            id : info
-            text : " "
+        Button:
+            text : "Back to Menu"
+            on_release:
+                app.root.current = 'menu_screen'
+                root.manager.transition.direction = "right"
         Button:
             text : "Send message"
-            size_hint : 0.4, 0.1
-            pos_hint : {"x" : 0.15, "top" : 0.2}
             on_release:
-                root.send()
-                app.root.current = 'chooser_screen'
+                root.send_message()
+                app.root.current = 'menu_screen'
                 root.manager.transition.direction = "left"
 
 <sessionKeyGeneratorScreen>:
@@ -177,7 +177,7 @@ ScreenManager:
             pos_hint : {"x" : 0.33, "top" : 0.55}
             on_release:
                 root.handle_session_key_generation()
-                app.root.current = 'chooser_screen'
+                app.root.current = 'menu_screen'
                 root.manager.transition.direction = "left"
         Label:
             text : root.time_left
@@ -223,16 +223,16 @@ ScreenManager:
         CheckBox:
             group: "block_encoding"
             on_press: root.set_block_encoding_choice(self, self.active, "OFB")
-        Label:
-            id : info
-            text : " "
         Button:
-            text : "Send message"
-            size_hint : 0.4, 0.1
-            pos_hint : {"x" : 0.15, "top" : 0.2}
+            text : "Back to Menu"
             on_release:
-                root.send()
-                app.root.current = 'chooser_screen'
+                app.root.current = 'menu_screen'
+                root.manager.transition.direction = "right"
+        Button:
+            text : "Send file"
+            on_release:
+                root.send_file()
+                app.root.current = 'menu_screen'
                 root.manager.transition.direction = "left"
 
 <errorInvalidInformation>:
@@ -298,5 +298,23 @@ ScreenManager:
 <noFileSelected>:
     Label:
         text : "No file selected!\nPlease, select one before sending!"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<successMessageSend>:
+    Label:
+        text : "Message sent correctly! :)"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<successFileSend>:
+    Label:
+        text : "File sent correctly! :)"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<noSessionKeyGenerated>:
+    Label:
+        text : "No session key generated!\n Please, generate session key first."
         size_hint : 0.1, 0.1
         pos_hint : {"x" : 0.3, "top" : 0.5}
