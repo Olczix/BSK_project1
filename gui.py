@@ -87,18 +87,11 @@ class fileSenderScreen(Screen):
     def send_file(self):
         if backend.validate_file_sending(path=self.file_path,
                                          mode=self.encryption_mode):
-            backend.send_file(path=self.file_path, encryption_mode=self.encryption_mode)
-
+            backend.init_file_sender(path=self.file_path,
+                                     encryption_mode=self.encryption_mode)
 
 # Class responsible for handling session key generation
 class sessionKeyGeneratorScreen(Screen):
-    time_left = StringProperty('TIME LEFT: --:--')
-
-    # not working (maybe finish later)
-    def update_time_on_label(self, time_end):
-        text = f'TIME LEFT: {round(time_end - time.time(), 2)}'
-        self.manager.get_screen('session_key_generator_screen').time_left = text
-
     def handle_session_key_generation(self):
         popUp(backend.generate_session_key())
 
