@@ -1,6 +1,12 @@
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.popup import Popup 
-import enum
+from kivy.uix.progressbar import ProgressBar
+from kivy.properties import ObjectProperty
+from kivy.uix.popup import Popup
+from kivy.clock import Clock
+from kivy.uix.widget import Widget
+import enum, time
+import threading
+from backend import File, send_file_chunk
 
 class PopUpMode(enum.Enum):
     ERROR_INVALID_INFORMATION = 0
@@ -60,6 +66,41 @@ class successFileSend(FloatLayout):
 class noSessionKeyGenerated(FloatLayout):
     pass
 
+# Class responsible for displaying progress bar while sending large files
+class ProgressBarFileSender(Widget):
+    progress_bar = ObjectProperty()
+     
+    def __init__(self, f, cryptor):
+        self.file = f
+        self.cryptor = cryptor
+        self.iterator = 0
+        self.percentage_interval = 100/self.file.no_of_packets
+        self.progress_bar = ProgressBar()
+        self.popup = Popup(
+            title ='Sending ...',
+            content = self.progress_bar
+        )
+        self.pop()
+ 
+    def pop(self):
+        self.progress_bar.value = 1
+        self.popup.open()
+        self.puopen(self.popup)
+ 
+    def next(self, dt):
+        if self.iterator < self.file.no_of_chunks:
+            send_file_chunk(chunk=self.file.chunks[self.iterator],
+                            cryptor=self.cryptor)
+            print(f'chunk id = {self.iterator}')
+            self.iterator += 1
+            self.progress_bar.value += self.percentage_interval
+        else:
+            self.popup.dismiss()
+
+    def puopen(self, instance):
+        Clock.schedule_interval(self.next, 1)
+
+
 def popUp(mode, extra_info=None):
     show = None
     info = 'INFO INFO'
@@ -107,5 +148,5 @@ def popUp(mode, extra_info=None):
         show = noSessionKeyGenerated()
     
     window = Popup(title = info, content = show,
-                   size_hint = (None, None), size = (350, 150)) 
+                   size_hint = (0.5, 0.4)) 
     window.open()

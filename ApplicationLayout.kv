@@ -179,11 +179,6 @@ ScreenManager:
                 root.handle_session_key_generation()
                 app.root.current = 'menu_screen'
                 root.manager.transition.direction = "left"
-        Label:
-            text : root.time_left
-            size_hint : 0.8, 0.2
-            pos_hint : {"x" : 0.15, "top" : 0.4}
-            font_size:25
 
 <fileSenderScreen>:
     GridLayout:

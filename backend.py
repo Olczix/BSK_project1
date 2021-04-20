@@ -3,6 +3,7 @@ import crypto_stuff
 import pandas as pd
 from pathlib import Path
 import network_connection
+import threading
 import pyautogui
 import pop_ups
 import config
@@ -10,6 +11,8 @@ import getmac
 import time
 import re
 import os
+from kivy.uix.progressbar import ProgressBar
+
 
 
 class User():
@@ -42,7 +45,6 @@ class User():
 
     def set_used_init_vector(self, init_vector):
         self.used_init_vector = init_vector
-
 
 def validate_login(login, password):
     for i in range(len(users['Login'])):
@@ -79,6 +81,9 @@ def send_message(message, encryption_mode):
         return pop_ups.PopUpMode.SUCCESS_MESSAGE_SEND
 
 def generate_session_key():
+    # Add progress bar:
+    # pop_ups.ProgressBarKeyGeneration()
+
     bytes_list = []
     session_key = None
     session_key_len = 32
@@ -123,38 +128,52 @@ def validate_file_sending(path, mode):
     return True    
 
 
-def send_file(path, encryption_mode):
-    # na początku jakaś ramka która powiadomi o pliku oraz jego rozszerzeniu
-    # potem pewnie init_vector i encryption_mode w kolejnych ramkach
-    # a potem wysyłanie zaszyfrowanych fragmentów pliku
+class File():
+    def __init__(self, path):
+        self.path = path
+        self.file_content = None
+        self.file_type = self.path.split('.')[-1]
+        self.file_size_in_bytes = Path(self.path).stat().st_size
+        self.no_of_packets = self.file_size_in_bytes/config.PACKAGE_SIZE
+        self.chunks = None
+        self.no_of_chunks = None
 
-    # TODO: add 'no session key' verification
+        self.read_binary_content()
+        self.divide_file_into_chunks()
 
-    file_type = path.split('.')[-1]
-    print(f'FILE TYPE: {file_type}')
-    file_size_in_bytes = Path(path).stat().st_size
-    print(f'FILE SIZE: {file_size_in_bytes}b')
+    def read_binary_content(self):
+        with open(self.path, 'rb') as f:
+            self.file_content = f.read()
 
-    with open(path, 'rb') as f:
-        file_content = f.read()
+    def divide_file_into_chunks(self):
+        # big files handling + there is a need to cut it in smaller pieces
+        if self.file_size_in_bytes > config.PACKAGE_SIZE:
+            self.chunks = [self.file_content[i:i+config.PACKAGE_SIZE]
+                           for i in range(0, self.file_size_in_bytes, config.PACKAGE_SIZE)]
+        else: # small file - only one chunk
+            self.chunks = [self.file_content]
 
-    # big files handling + there is a need to cut it in smaller pieces
-    if file_size_in_bytes > config.PACKAGE_SIZE:
-        chunks = [file_content[i:i+config.PACKAGE_SIZE]
-                  for i in range(0, file_size_in_bytes, config.PACKAGE_SIZE)]
-    else: # small file - only one chunk
-        chunks = file_content
+        self.no_of_chunks = len(self.chunks)
 
+
+def init_file_sender(path, encryption_mode):
+    f = File(path=path)
+
+    # prepare cryptor for message encyption
     init_vector = os.urandom(16) if encryption_mode != 'ECB' else None
     current_user.set_used_init_vector(init_vector=init_vector)
     e = crypto_stuff.createAESCipherClass(mode=encryption_mode,
                                           key=current_user.get_session_key(),
                                           init_vector=init_vector)
 
-    for chunk in chunks:
-        chunk_string = chunk.decode("utf-8")
-        encrypted_chunk = e.encrypt_text(chunk_string.encode('utf-8'))
-        network_connection.NetworkConnection().send(encrypted_chunk)
+    # start sending chunks and displaying progress bar
+    pop_ups.ProgressBarFileSender(f=f, cryptor=e)
+
+
+def send_file_chunk(chunk, cryptor):
+    chunk_string = chunk.decode("utf-8")
+    encrypted_chunk = cryptor.encrypt_text(chunk_string.encode('utf-8'))
+    network_connection.NetworkConnection().send(encrypted_chunk)
 
 
 # Getting 'database' of users
