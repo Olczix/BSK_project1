@@ -7,6 +7,7 @@ import threading
 import pyautogui
 import pop_ups
 import config
+import users
 import getmac
 import time
 import re
@@ -14,51 +15,27 @@ import os
 from kivy.uix.progressbar import ProgressBar
 
 
-
-class User():
-    def __init__(self):
-        self.login = None
-        self.password = None
-        self.session_key = None
-        self.used_init_vector = None
-
-    def get_login(self):
-        return self.login
-
-    def get_password(self):
-        return self.password
-
-    def get_session_key(self):
-        return self.session_key
-
-    def get_used_init_vector(self):
-        return self.used_init_vector
-
-    def set_login(self, login):
-        self.login = login
-
-    def set_password(self, password):
-        self.password = password
-
-    def set_session_key(self, key):
-        self.session_key = key
-
-    def set_used_init_vector(self, init_vector):
-        self.used_init_vector = init_vector
-
 def validate_login(login, password):
-    for i in range(len(users['Login'])):
-        if users_list[i] == login and pwds_list[i] == password:
-            current_user.set_login(users_list[i])
-            current_user.set_password(pwds_list[i])
+    hash_password = crypto_stuff.hash_password_for_key(str.encode(password,'latin_1'))
+    password = crypto_stuff.hash_password_for_init_vector(str.encode(password,'latin_1'))
+    for i in range(len(users_frame['Login'])):
+        if users_list[i] == login and pwds_list[i] == hash_password.decode('latin_1'):
+            global current_user
+            current_user = users.Current_User(login, hash_password, password)
             return pop_ups.PopUpMode.SUCCESS_LOG_IN
     return pop_ups.PopUpMode.ERROR_INVALID_INFORMATION
 
 
 def validate_account_creation(login, password, repeat_password):
-    new_user = pd.DataFrame([[login, password]], columns = ['Login', 'Password'])
-    if login != "" and password == repeat_password:
+    hash_password = crypto_stuff.hash_password_for_key(str.encode(password, 'latin_1'))
+    hash_repeat_password = crypto_stuff.hash_password_for_key(str.encode(repeat_password, 'latin_1'))
+    password = crypto_stuff.hash_password_for_init_vector(str.encode(password, 'latin_1'))
+    repeat_password = crypto_stuff.hash_password_for_init_vector(str.encode(repeat_password, 'latin_1'))
+    new_user = pd.DataFrame([[login, hash_password.decode('latin_1')]], columns = ['Login', 'Password'])
+    if login != "" and hash_password == hash_repeat_password:
         if login not in users_list:
+            global current_user
+            current_user = users.Current_User(login, hash_password, password, creation=True)
             new_user.to_csv(users_data_path, mode = 'a', header = False, index = False)
             return pop_ups.PopUpMode.SUCCESS_SIGN_IN
         else:
@@ -101,13 +78,14 @@ def generate_session_key():
         counter += 1
 
     session_key = bytes(bytes_list)
-    print(session_key)
     current_user.set_session_key(session_key)
 
     if session_key is not None:
         return pop_ups.PopUpMode.SUCCESS_SESSION_KEY
     else:
         return pop_ups.PopUpMode.ERROR_SESSION_KEY
+
+
 
 
 def get_chosen_file_path():
@@ -178,7 +156,10 @@ def send_file_chunk(chunk, cryptor):
 
 # Getting 'database' of users
 users_data_path = 'users.csv'
-users = pd.read_csv(users_data_path, usecols=['Login','Password'])
-users_list = list(users['Login'])
-pwds_list = list(users['Password'])
-current_user = User()
+if not os.path.exists(users_data_path): 
+    df = pd.DataFrame(columns=['Login', 'Password'])
+    df.to_csv(users_data_path, index=False)
+users_frame = pd.read_csv(users_data_path, usecols=['Login','Password'])
+users_list = list(users_frame['Login'])
+pwds_list = list(users_frame['Password'])
+current_user = None

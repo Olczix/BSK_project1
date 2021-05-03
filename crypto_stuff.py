@@ -114,9 +114,9 @@ class RSA_Agent:
         password=None)
         return private_key
 
-    def get_my_public_key_object(self):
+    def get_public_key_object(self, key_path):
         # get public key path
-        key_file = os.path.join(self.key_path, PUBLIC_KEY_DIR_NAME, PUBLIC_KEY_FILE_NAME)
+        key_file = os.path.join(key_path, PUBLIC_KEY_DIR_NAME, PUBLIC_KEY_FILE_NAME)
         # read encrypted public key
         encrypted_key_pem = file_manager.read_file(key_file)
         # decrypt public key
@@ -127,9 +127,9 @@ class RSA_Agent:
         backend=backends.default_backend())
         return public_key
 
-    def get_my_public_key_bytes(self):
+    def get_public_key_bytes(self, key_path):
         # get public key path
-        key_file = os.path.join(self.key_path, PUBLIC_KEY_DIR_NAME, PUBLIC_KEY_FILE_NAME)
+        key_file = os.path.join(key_path, PUBLIC_KEY_DIR_NAME, PUBLIC_KEY_FILE_NAME)
         # read encrypted file
         encrypted_key_pem = file_manager.read_file(key_file)
         # return decrypted public key
@@ -146,10 +146,13 @@ class RSA_Agent:
         # write to key file, create if doesn't exist
         file_manager.write_to_file(key_file, encrypted_pem)
 
-    def encrypt_session_key(self, session_key):
-        # tutaj pewnie bedzie klucz publiczny drugiej osoby, ale trzeba pomyslec o przechowywaniu uzytkownikow
+    def store_public_key(self, user_dir, public_key):
+        user_path = os.path.join(self.key_path, user_dir)
+        self.save_key_to_file(public_key, user_path, PUBLIC_KEY_DIR_NAME, PUBLIC_KEY_FILE_NAME)
 
-        public_key = self.get_my_public_key_object()
+    def encrypt_session_key(self, user_dir, session_key):
+        user_path = os.path.join(self.key_path, user_dir)
+        public_key = self.get_public_key_object(user_path)
         encrypted_session_key = public_key.encrypt(
         session_key,
         OAEP(
