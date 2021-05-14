@@ -11,6 +11,7 @@ class Logic_Connection:
         self.lock = threading.Lock()
         self.sender = network_connection.NetworkConnection(ip_address)
         self.communication_allowed = False
+        receivers_public_key = None
 
     def set_receivers_public_key(self,receivers_public_key):
         self.lock.acquire()
@@ -32,7 +33,7 @@ class Logic_Connection:
     def allow_communication(self):
         self.lock.acquire()
         self.communication_allowed = True
-        self.lock.acquire()
+        self.lock.release()
 
     def send_encrypted_session_key(self):
         self.lock.acquire()
@@ -42,19 +43,21 @@ class Logic_Connection:
 
     def decrypt_message(self, mode, encrypted_message, init_vector):
         self.lock.acquire()
-        return backend.current_user.decrypt_message(mode, encrypted_message, init_vector)
-        self.lock.acquire()
+        decrypted_message = backend.current_user.decrypt_message(mode, encrypted_message, init_vector)
+        self.lock.release()
+        return decrypted_message
+        
 
     def encrypt_and_send_message(self, mode, message):
         self.lock.acquire()
         if mode != 'ECB':
             init_vector = os.urandom(16)
-            mode = mode.encode('utf-8')
             encrypted_message = backend.current_user.encrypt_message(mode,message, init_vector)
+            mode = mode.encode('utf-8')
             whole_message = config.JUST_TALK_TYPE + mode + init_vector + encrypted_message
         else:
             encrypted_message = backend.current_user.encrypt_message(mode,message, None)
             mode = mode.encode('utf-8')
             whole_message = config.JUST_TALK_TYPE + mode + encrypted_message
         self.sender.send(whole_message)
-        self.lock.acquire()
+        self.lock.release()

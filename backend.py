@@ -68,15 +68,13 @@ def send_message(message, encryption_mode):
     if current_user.get_session_key() is None:
         return pop_ups.PopUpMode.NO_SESSION_KEY_GENERATED
     else:
-        init_vector = os.urandom(16) if encryption_mode != 'ECB' else None
-        current_user.set_used_init_vector(init_vector=init_vector)
-        e = crypto_stuff.createAESCipherClass(mode=encryption_mode,
-                                            key=current_user.get_session_key(),
-                                            init_vector=init_vector)
-        encrypted_message = e.encrypt_text(message.encode('utf-8'))
-        connection = logic_connection.Logic_Connection('192.168.31.86')
-        connection.send_my_public_key()
-        #network_connection.NetworkConnection().send(message.encode('utf-8'))
+        global connection
+        if connection is None:
+            connection = logic_connection.Logic_Connection('192.168.31.86')
+            connection.send_my_public_key()
+        elif connection.communication_allowed:
+            connection.encrypt_and_send_message(encryption_mode, message.encode('utf-8'))
+        
         return pop_ups.PopUpMode.SUCCESS_MESSAGE_SEND
 
 
@@ -194,9 +192,13 @@ def handle_received_message(message, ip_address):
         connection.set_receivers_public_key(content)
     
     # we get public key, but we previously sent one
-    if type == config.PUBLIC_KEY_TYPE and connection is not None:
+    elif type == config.PUBLIC_KEY_TYPE and connection is not None:
+        # store receivers public key
+        connection.set_receivers_public_key(content)
         # we send previously generated session key
         connection.send_encrypted_session_key()
+        connection.allow_communication()
+        print("Communication Allowed")
 
     # we received session key from another user
     # it is encrypted with our public key
@@ -205,13 +207,17 @@ def handle_received_message(message, ip_address):
         # we set session key and now communication is allowed
         connection.set_session_key(content)
         connection.allow_communication()
+        print("Communication Allowed")
 
     # normal communication case
     if type == config.JUST_TALK_TYPE:
-        mode = content[0:2]
-        if mode != b'EBC':
-            init_vector = content[3:18]
-        encrypted_message_content = content[19:]
+        mode = content[0:3]
+        if mode != b'ECB':
+            init_vector = content[3:19]
+            encrypted_message_content = content[19:]
+        else:
+            init_vector = None
+            encrypted_message_content = content[3:]
         mode = mode.decode('utf-8')
         decrypted_message_content = connection.decrypt_message(mode,encrypted_message_content,init_vector)
         # TODO HERE ADD SOME GUI FOR MESSAGE PRESENTING
