@@ -150,9 +150,11 @@ class RSA_Agent:
         user_path = os.path.join(self.key_path, user_dir)
         self.save_key_to_file(public_key, user_path, PUBLIC_KEY_DIR_NAME, PUBLIC_KEY_FILE_NAME)
 
-    def encrypt_session_key(self, user_dir, session_key):
-        user_path = os.path.join(self.key_path, user_dir)
-        public_key = self.get_public_key_object(user_path)
+    def encrypt_session_key(self, public_key_bytes, session_key):
+        public_key = serialization.load_pem_public_key(
+        public_key_bytes,
+        backend=backends.default_backend())
+
         encrypted_session_key = public_key.encrypt(
         session_key,
         OAEP(
