@@ -2,6 +2,7 @@ from plyer import filechooser
 import crypto_stuff
 import pandas as pd
 from pathlib import Path
+import logic_connection
 import network_connection
 import threading
 import pyautogui
@@ -14,14 +15,29 @@ import re
 import os
 from kivy.uix.progressbar import ProgressBar
 
+# Getting 'database' of users
+users_data_path = 'users.csv'
+if not os.path.exists(users_data_path): 
+    df = pd.DataFrame(columns=['Login', 'Password'])
+    df.to_csv(users_data_path, index=False)
+users_frame = pd.read_csv(users_data_path, usecols=['Login','Password'])
+users_list = list(users_frame['Login'])
+pwds_list = list(users_frame['Password'])
+current_user = None
+connection = None
+
 
 def validate_login(login, password):
     hash_password = crypto_stuff.hash_password_for_key(str.encode(password,'latin_1'))
     password = crypto_stuff.hash_password_for_init_vector(str.encode(password,'latin_1'))
     for i in range(len(users_frame['Login'])):
         if users_list[i] == login and pwds_list[i] == hash_password.decode('latin_1'):
+            
             global current_user
             current_user = users.Current_User(login, hash_password, password)
+
+            init_listening_thread()
+
             return pop_ups.PopUpMode.SUCCESS_LOG_IN
     return pop_ups.PopUpMode.ERROR_INVALID_INFORMATION
 
@@ -34,8 +50,12 @@ def validate_account_creation(login, password, repeat_password):
     new_user = pd.DataFrame([[login, hash_password.decode('latin_1')]], columns = ['Login', 'Password'])
     if login != "" and hash_password == hash_repeat_password:
         if login not in users_list:
+
             global current_user
             current_user = users.Current_User(login, hash_password, password, creation=True)
+
+            init_listening_thread()
+
             new_user.to_csv(users_data_path, mode = 'a', header = False, index = False)
             return pop_ups.PopUpMode.SUCCESS_SIGN_IN
         else:
@@ -48,14 +68,16 @@ def send_message(message, encryption_mode):
     if current_user.get_session_key() is None:
         return pop_ups.PopUpMode.NO_SESSION_KEY_GENERATED
     else:
-        init_vector = os.urandom(16) if encryption_mode != 'ECB' else None
-        current_user.set_used_init_vector(init_vector=init_vector)
-        e = crypto_stuff.createAESCipherClass(mode=encryption_mode,
-                                            key=current_user.get_session_key(),
-                                            init_vector=init_vector)
-        encrypted_message = e.encrypt_text(message.encode('utf-8'))
-        network_connection.NetworkConnection().send(encrypted_message)
+        global connection
+        if connection is None:
+            connection = logic_connection.Logic_Connection('192.168.31.86')
+            connection.send_my_public_key()
+        elif connection.communication_allowed:
+            connection.encrypt_and_send_message(encryption_mode, message.encode('utf-8'))
+        
         return pop_ups.PopUpMode.SUCCESS_MESSAGE_SEND
+
+
 
 def generate_session_key():
     # Add progress bar:
@@ -153,13 +175,52 @@ def send_file_chunk(chunk, cryptor):
     encrypted_chunk = cryptor.encrypt_text(chunk_string.encode('utf-8'))
     network_connection.NetworkConnection().send(encrypted_chunk)
 
+def init_listening_thread():
+    network_connection.ListenningThread().start()
 
-# Getting 'database' of users
-users_data_path = 'users.csv'
-if not os.path.exists(users_data_path): 
-    df = pd.DataFrame(columns=['Login', 'Password'])
-    df.to_csv(users_data_path, index=False)
-users_frame = pd.read_csv(users_data_path, usecols=['Login','Password'])
-users_list = list(users_frame['Login'])
-pwds_list = list(users_frame['Password'])
-current_user = None
+def handle_received_message(message, ip_address):
+    type = message[0:1]
+    content = message[1:]
+    global connection
+    # we get public key and we didn't send our pulic key
+    if type == config.PUBLIC_KEY_TYPE and connection is None:
+        # logic connection object has to be created
+        connection = logic_connection.Logic_Connection(ip_address)
+        # we should send our public key
+        connection.send_my_public_key()
+        # store receivers public key
+        connection.set_receivers_public_key(content)
+    
+    # we get public key, but we previously sent one
+    elif type == config.PUBLIC_KEY_TYPE and connection is not None:
+        # store receivers public key
+        connection.set_receivers_public_key(content)
+        # we send previously generated session key
+        connection.send_encrypted_session_key()
+        connection.allow_communication()
+        print("Communication Allowed")
+
+    # we received session key from another user
+    # it is encrypted with our public key
+    # connection object should be already created at this point
+    if type == config.SESSION_KEY_TYPE:
+        # we set session key and now communication is allowed
+        connection.set_session_key(content)
+        connection.allow_communication()
+        print("Communication Allowed")
+
+    # normal communication case
+    if type == config.JUST_TALK_TYPE:
+        mode = content[0:3]
+        if mode != b'ECB':
+            init_vector = content[3:19]
+            encrypted_message_content = content[19:]
+        else:
+            init_vector = None
+            encrypted_message_content = content[3:]
+        mode = mode.decode('utf-8')
+        decrypted_message_content = connection.decrypt_message(mode,encrypted_message_content,init_vector)
+        # TODO HERE ADD SOME GUI FOR MESSAGE PRESENTING
+        print(decrypted_message_content)
+
+
