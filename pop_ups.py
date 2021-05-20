@@ -1,13 +1,18 @@
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.progressbar import ProgressBar
 from kivy.properties import ObjectProperty
-from kivy.uix.popup import Popup
-from kivy.clock import Clock
 from kivy.uix.widget import Widget
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
+from kivy.clock import Clock
+from typing import Text
 import enum, time
 import threading
 import backend
+import config
 
+
+# Possible pop ups types/modes
 class PopUpMode(enum.Enum):
     ERROR_INVALID_INFORMATION = 0
     ERROR_SESSION_KEY = 1
@@ -25,6 +30,7 @@ class PopUpMode(enum.Enum):
     NO_SESSION_KEY_GENERATED = 13
     ERROR_INCORRECT_IP_ADDRESS_FORMAT = 14
 
+# Classes implementing particular errors/infos
 class errorInvalidInformation(FloatLayout): 
     pass
 
@@ -105,6 +111,19 @@ class ProgressBarFileSender(Widget):
         Clock.schedule_interval(self.next, 1)
 
 
+# Class responsible for displaying newly arrived message
+class NewMessage(Widget):
+    def __init__(self, msg):
+        print(msg)
+        self.popup = Popup(
+            title = f'New message from {config.ADDRESS} has arrived!',
+            size_hint = (0.5, 0.4),
+            content=Label(text=f'{msg}')
+        )
+        self.popup.open()
+
+
+# Definition of pop up content (title and text)
 def popUp(mode, extra_info=None):
     show = None
     info = 'INFO INFO'

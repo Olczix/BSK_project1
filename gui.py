@@ -70,7 +70,7 @@ class messageSenderScreen(Screen):
     def send_message(self):
         # add validation if encryption_mode is empty/None
         action_result = backend.send_message(message=self.message.text,
-                                           encryption_mode=self.encryption_mode)
+                                             encryption_mode=self.encryption_mode)
         self.message.text = ""
         popUp(action_result)
 
@@ -98,11 +98,7 @@ class sessionInitializationScreen(Screen):
 
     def save_ip_addres(self):
         if backend.validate_ip_address(self.ip_address.text):
-            config.ADDRESS = self.ip_address
             screen_manager.current = 'session_key_generator_screen'
-        else:
-            popUp(PopUpMode.ERROR_INCORRECT_IP_ADDRESS_FORMAT)
-
 
 # Class responsible for handling session key generation
 class sessionKeyGeneratorScreen(Screen):

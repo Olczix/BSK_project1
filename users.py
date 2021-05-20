@@ -1,6 +1,8 @@
 import crypto_stuff
 import os
 
+
+# Class responsible for handling user object management
 class Current_User:
     def __init__(self, login, hash_password_for_key, hash_password_for_init_vector, creation=False):
         self.login = login

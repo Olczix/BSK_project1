@@ -5,6 +5,8 @@ import threading
 import config
 import os
 
+
+# Class responsible for managing logic connection between two clients
 class Logic_Connection:
 
     def __init__(self, ip_address):
@@ -47,7 +49,6 @@ class Logic_Connection:
         self.lock.release()
         return decrypted_message
         
-
     def encrypt_and_send_message(self, mode, message):
         self.lock.acquire()
         if mode != 'ECB':

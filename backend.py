@@ -15,6 +15,7 @@ import re
 import os
 from kivy.uix.progressbar import ProgressBar
 
+
 # Getting 'database' of users
 users_data_path = 'users.csv'
 if not os.path.exists(users_data_path): 
@@ -27,6 +28,7 @@ current_user = None
 connection = None
 
 
+# Validate login and check if user is in database
 def validate_login(login, password):
     hash_password = crypto_stuff.hash_password_for_key(str.encode(password,'latin_1'))
     password = crypto_stuff.hash_password_for_init_vector(str.encode(password,'latin_1'))
@@ -42,6 +44,7 @@ def validate_login(login, password):
     return pop_ups.PopUpMode.ERROR_INVALID_INFORMATION
 
 
+# Validate new user login and passwords correctness
 def validate_account_creation(login, password, repeat_password):
     hash_password = crypto_stuff.hash_password_for_key(str.encode(password, 'latin_1'))
     hash_repeat_password = crypto_stuff.hash_password_for_key(str.encode(repeat_password, 'latin_1'))
@@ -64,16 +67,24 @@ def validate_account_creation(login, password, repeat_password):
         return pop_ups.PopUpMode.ERROR_INVALID_INFORMATION
 
 
+# Validate client IP address format
 def validate_ip_address(ip_address):
-    return len(ip_address.split(".")) == 4
+    if len(ip_address.split(".")) == 4:
+        config.ADDRESS = ip_address
+        return True
+    else:
+        pop_ups.popUp(pop_ups.PopUpMode.ERROR_INCORRECT_IP_ADDRESS_FORMAT)
+        return False
 
+
+# Handle message sending
 def send_message(message, encryption_mode):
     if current_user.get_session_key() is None:
         return pop_ups.PopUpMode.NO_SESSION_KEY_GENERATED
     else:
         global connection
         if connection is None:
-            connection = logic_connection.Logic_Connection('192.168.31.86')
+            connection = logic_connection.Logic_Connection(config.ADDRESS)
             connection.send_my_public_key()
         elif connection.communication_allowed:
             connection.encrypt_and_send_message(encryption_mode, message.encode('utf-8'))
@@ -81,10 +92,8 @@ def send_message(message, encryption_mode):
         return pop_ups.PopUpMode.SUCCESS_MESSAGE_SEND
 
 
+# Handle session key generation
 def generate_session_key():
-    # Add progress bar:
-    # pop_ups.ProgressBarKeyGeneration()
-
     bytes_list = []
     session_key = None
     session_key_len = 32
@@ -105,11 +114,14 @@ def generate_session_key():
     current_user.set_session_key(session_key)
 
     if session_key is not None:
+        # Send fake message to initialize connection
+        send_message("Connection initialized", "ECB")
         return pop_ups.PopUpMode.SUCCESS_SESSION_KEY
     else:
         return pop_ups.PopUpMode.ERROR_SESSION_KEY
 
 
+# Show chosen file path
 def get_chosen_file_path():
     path = filechooser.open_file(title="Select file to send ...")
     if path is not None:
@@ -118,6 +130,7 @@ def get_chosen_file_path():
     return path[0]
 
 
+# Handle file sending validation
 def validate_file_sending(path, mode):
     if not mode:
         pop_ups.popUp(pop_ups.PopUpMode.NO_ENCRYPTION_MODE_SELECTED)
@@ -128,6 +141,7 @@ def validate_file_sending(path, mode):
     return True    
 
 
+# Class representing a file object
 class File():
     def __init__(self, path):
         self.path = path
@@ -156,6 +170,7 @@ class File():
         self.no_of_chunks = len(self.chunks)
 
 
+# Initialization of file sender (with progress bar)
 def init_file_sender(path, encryption_mode):
     f = File(path=path)
 
@@ -170,16 +185,20 @@ def init_file_sender(path, encryption_mode):
     pop_ups.ProgressBarFileSender(f=f, cryptor=e)
 
 
+# Handle sending a file chunk (for bigger files)
 def send_file_chunk(chunk, cryptor):
     chunk_string = chunk.decode("utf-8")
     encrypted_chunk = cryptor.encrypt_text(chunk_string.encode('utf-8'))
     network_connection.NetworkConnection().send(encrypted_chunk)
 
 
+# Initialize thread for listening incomming messages 
 def init_listening_thread():
     network_connection.ListenningThread().start()
 
 
+# Decide what to do with received message
+# This function is called when a new message arrives
 def handle_received_message(message, ip_address):
     type = message[0:1]
     content = message[1:]
@@ -221,6 +240,8 @@ def handle_received_message(message, ip_address):
             init_vector = None
             encrypted_message_content = content[3:]
         mode = mode.decode('utf-8')
-        decrypted_message_content = connection.decrypt_message(mode,encrypted_message_content,init_vector)
-        # TODO HERE ADD SOME GUI FOR MESSAGE PRESENTING
-        print(decrypted_message_content)
+        if connection:
+            decrypted_message_content = connection.decrypt_message(mode, encrypted_message_content, init_vector)
+            # new message presenting
+            print(decrypted_message_content)
+            pop_ups.NewMessage(msg=decrypted_message_content.decode("utf-8"))
