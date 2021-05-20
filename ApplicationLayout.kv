@@ -6,6 +6,7 @@ ScreenManager:
     messageSenderScreen:
     fileSenderScreen:
     sessionKeyGeneratorScreen:
+    sessionInitializationScreen:
   
 <loginScreen>: 
     login : login
@@ -28,6 +29,7 @@ ScreenManager:
         TextInput: 
             id : password
             multiline :False
+            password: True
             size_hint : 0.3, 0.1
             pos_hint : {"x" : 0.45, "top" : 0.7}
         Button: 
@@ -65,6 +67,7 @@ ScreenManager:
             pos_hint : {"x" : 0.25, "top" : 0.7} 
         TextInput: 
             id : password
+            password: True
             multiline : False
             size_hint : 0.3, 0.1
             pos_hint : {"x" : 0.45, "top" : 0.7}
@@ -73,7 +76,8 @@ ScreenManager:
             size_hint : 0.2, 0.1
             pos_hint : {"x" : 0.25, "top" : 0.5} 
         TextInput: 
-            id : repeat_password 
+            id : repeat_password
+            password: True
             multiline : False
             size_hint : 0.3, 0.1
             pos_hint : {"x" : 0.45, "top" : 0.5} 
@@ -84,7 +88,33 @@ ScreenManager:
             on_press : 
                 root.create_account_btn_clicked()
                 root.manager.transition.direction = "right"
-  
+
+<sessionInitializationScreen>:
+    ip_address : ip_address
+    info : info
+    FloatLayout:
+        Label:
+            id : info
+            size_hint : 0.8, 0.2
+            pos_hint : {"x" : 0.15, "top" : 0.9}
+            text : "TYPE CLIENT IP ADDRESS"
+        Label:
+            text : "IP ADDRESS:"
+            size_hint : 0.2, 0.1
+            pos_hint : {"x" : 0.25, "top" : 0.6}
+        TextInput:
+            id : ip_address
+            multiline : False
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.45, "top" : 0.6} 
+        Button:
+            text : "CONNECT"
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.39, "top" : 0.28}
+            on_press :
+                root.save_ip_addres()
+                root.manager.transition.direction = "left"
+
 <menuScreen>:
     info : info 
     FloatLayout: 
@@ -106,13 +136,6 @@ ScreenManager:
             pos_hint : {"x" : 0.33, "top" : 0.5}
             on_release:
                 app.root.current = 'file_sender_screen'
-                root.manager.transition.direction = "left"
-        Button:
-            text : "Generate session key"
-            size_hint : 0.4, 0.1
-            pos_hint : {"x" : 0.33, "top" : 0.35}
-            on_release:
-                app.root.current = 'session_key_generator_screen'
                 root.manager.transition.direction = "left"
    
 <messageSenderScreen>:
@@ -312,5 +335,11 @@ ScreenManager:
 <noSessionKeyGenerated>:
     Label:
         text : "No session key generated!\n Please, generate session key first."
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<errorIncorrectIpAddressFormat>:
+    Label:
+        text : "Incorrect IP address.\n\n Correct format is: xxx.xxx.xxx.xxx\nwhere x is a digit"
         size_hint : 0.1, 0.1
         pos_hint : {"x" : 0.3, "top" : 0.5}

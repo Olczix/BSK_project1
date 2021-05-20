@@ -6,7 +6,7 @@ from kivy.clock import Clock
 from kivy.uix.widget import Widget
 import enum, time
 import threading
-from backend import File, send_file_chunk
+import backend
 
 class PopUpMode(enum.Enum):
     ERROR_INVALID_INFORMATION = 0
@@ -23,6 +23,7 @@ class PopUpMode(enum.Enum):
     SUCCESS_MESSAGE_SEND = 11
     SUCCESS_FILE_SEND = 12
     NO_SESSION_KEY_GENERATED = 13
+    ERROR_INCORRECT_IP_ADDRESS_FORMAT = 14
 
 class errorInvalidInformation(FloatLayout): 
     pass
@@ -66,6 +67,9 @@ class successFileSend(FloatLayout):
 class noSessionKeyGenerated(FloatLayout):
     pass
 
+class errorIncorrectIpAddressFormat(FloatLayout):
+    pass
+
 # Class responsible for displaying progress bar while sending large files
 class ProgressBarFileSender(Widget):
     progress_bar = ObjectProperty()
@@ -89,7 +93,7 @@ class ProgressBarFileSender(Widget):
  
     def next(self, dt):
         if self.iterator < self.file.no_of_chunks:
-            send_file_chunk(chunk=self.file.chunks[self.iterator],
+            backend.send_file_chunk(chunk=self.file.chunks[self.iterator],
                             cryptor=self.cryptor)
             print(f'chunk id = {self.iterator}')
             self.iterator += 1
@@ -146,6 +150,9 @@ def popUp(mode, extra_info=None):
     elif mode.value == 13:
         info = 'ERROR'
         show = noSessionKeyGenerated()
+    elif mode.value == 14:
+        info = 'ERROR'
+        show = errorIncorrectIpAddressFormat()
     
     window = Popup(title = info, content = show,
                    size_hint = (0.5, 0.4)) 

@@ -1,3 +1,4 @@
+from logic_connection import Logic_Connection
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.progressbar import ProgressBar
@@ -12,6 +13,7 @@ from kivy.lang import Builder
 from kivy.app import App
 import network_connection
 import backend
+import config
 import time
 import os
 
@@ -25,7 +27,7 @@ class loginScreen(Screen):
         action_result = backend.validate_login(login=self.login.text, password=self.password.text)
 
         if action_result == PopUpMode.SUCCESS_LOG_IN:
-            screen_manager.current = 'menu_screen'
+            screen_manager.current = 'session_initialization_screen'
             popUp(PopUpMode.SUCCESS_LOG_IN)
         else:
             popUp(action_result)
@@ -44,7 +46,7 @@ class signupScreen(Screen):
                                                           repeat_password=self.repeat_password.text)
 
         if action_result == PopUpMode.SUCCESS_SIGN_IN:
-            screen_manager.current = 'menu_screen'
+            screen_manager.current = 'session_initialization_screen'
             popUp(PopUpMode.SUCCESS_SIGN_IN)
         else:
             popUp(action_result)
@@ -90,6 +92,18 @@ class fileSenderScreen(Screen):
             backend.init_file_sender(path=self.file_path,
                                      encryption_mode=self.encryption_mode)
 
+# Class responsible for handling logic connection initialization
+class sessionInitializationScreen(Screen):
+    ip_address = ObjectProperty(None)
+
+    def save_ip_addres(self):
+        if backend.validate_ip_address(self.ip_address.text):
+            config.ADDRESS = self.ip_address
+            screen_manager.current = 'session_key_generator_screen'
+        else:
+            popUp(PopUpMode.ERROR_INCORRECT_IP_ADDRESS_FORMAT)
+
+
 # Class responsible for handling session key generation
 class sessionKeyGeneratorScreen(Screen):
     def handle_session_key_generation(self):
@@ -110,6 +124,7 @@ screen_manager.add_widget(signupScreen(name='signup_screen'))
 screen_manager.add_widget(messageSenderScreen(name='message_sender_screen'))
 screen_manager.add_widget(fileSenderScreen(name='file_sender_screen'))
 screen_manager.add_widget(sessionKeyGeneratorScreen(name='session_key_generator_screen'))
+screen_manager.add_widget(sessionInitializationScreen(name='session_initialization_screen'))
 
 # Class responsible for handling application start up
 class CryptoApplicationMain(App): 

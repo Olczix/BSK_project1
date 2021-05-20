@@ -64,6 +64,9 @@ def validate_account_creation(login, password, repeat_password):
         return pop_ups.PopUpMode.ERROR_INVALID_INFORMATION
 
 
+def validate_ip_address(ip_address):
+    return len(ip_address.split(".")) == 4
+
 def send_message(message, encryption_mode):
     if current_user.get_session_key() is None:
         return pop_ups.PopUpMode.NO_SESSION_KEY_GENERATED
@@ -76,7 +79,6 @@ def send_message(message, encryption_mode):
             connection.encrypt_and_send_message(encryption_mode, message.encode('utf-8'))
         
         return pop_ups.PopUpMode.SUCCESS_MESSAGE_SEND
-
 
 
 def generate_session_key():
@@ -106,8 +108,6 @@ def generate_session_key():
         return pop_ups.PopUpMode.SUCCESS_SESSION_KEY
     else:
         return pop_ups.PopUpMode.ERROR_SESSION_KEY
-
-
 
 
 def get_chosen_file_path():
@@ -175,8 +175,10 @@ def send_file_chunk(chunk, cryptor):
     encrypted_chunk = cryptor.encrypt_text(chunk_string.encode('utf-8'))
     network_connection.NetworkConnection().send(encrypted_chunk)
 
+
 def init_listening_thread():
     network_connection.ListenningThread().start()
+
 
 def handle_received_message(message, ip_address):
     type = message[0:1]
@@ -222,5 +224,3 @@ def handle_received_message(message, ip_address):
         decrypted_message_content = connection.decrypt_message(mode,encrypted_message_content,init_vector)
         # TODO HERE ADD SOME GUI FOR MESSAGE PRESENTING
         print(decrypted_message_content)
-
-
