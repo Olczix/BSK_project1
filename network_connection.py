@@ -1,8 +1,7 @@
+import threading
+import backend
 import config
 import socket
-import threading
-import logic_connection
-import backend
 
 
 # Class responsible for creating socket which enables physical connection with client

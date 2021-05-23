@@ -1,21 +1,10 @@
-from logic_connection import Logic_Connection
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.progressbar import ProgressBar
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
 from pop_ups import PopUpMode, popUp
-from kivy.uix.label import Label
-from kivy.uix.popup import Popup
-from kivy.uix.widget import Widget
 from kivy.lang import Builder
 from kivy.app import App
-import network_connection
 import backend
-import config
-import time
-import os
+
 
 
 # Class responsible for handling loging in

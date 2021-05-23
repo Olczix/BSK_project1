@@ -4,7 +4,6 @@ import pandas as pd
 from pathlib import Path
 import logic_connection
 import network_connection
-import threading
 import pyautogui
 import pop_ups
 import config
@@ -13,7 +12,6 @@ import getmac
 import time
 import re
 import os
-from kivy.uix.progressbar import ProgressBar
 
 
 # Getting 'database' of users
@@ -115,7 +113,7 @@ def generate_session_key():
 
     if session_key is not None:
         # Send fake message to initialize connection
-        send_message("Connection initialized", "ECB")
+        # send_message("Connection initialized", "ECB")
         return pop_ups.PopUpMode.SUCCESS_SESSION_KEY
     else:
         return pop_ups.PopUpMode.ERROR_SESSION_KEY

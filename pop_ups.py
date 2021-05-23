@@ -5,11 +5,9 @@ from kivy.uix.widget import Widget
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.clock import Clock
-from typing import Text
-import enum, time
-import threading
 import backend
 import config
+import enum
 
 
 # Possible pop ups types/modes
