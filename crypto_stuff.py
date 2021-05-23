@@ -9,6 +9,13 @@ from cryptography.hazmat.primitives import hashes
 import file_manager
 import os
 
+# ----------------------------------------
+# Functions below enables us to:
+# - manage RSA keys
+# - encrypt/decrypt messages and files chunks
+# - configure cryptor to actually be used in the encryption/decryption process
+# ----------------------------------------
+
 PRIVATE_KEY_BEGIN = b'-----BEGIN PRIVATE KEY-----\n'
 PRIVATE_KEY_END = b'-----END PRIVATE KEY-----\n'
 PRIVATE_KEY_DIR_NAME = 'private_key'
@@ -36,6 +43,7 @@ def hash_password_for_init_vector(password):
     digest = hashes.Hash(hashes.SHAKE128(16), backends.default_backend())
     digest.update(password) 
     return digest.finalize()
+
 
 class Cipher_AES:
     def __init__(self, key, mode):

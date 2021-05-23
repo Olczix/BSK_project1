@@ -5,6 +5,7 @@ import logic_connection
 import backend
 
 
+# Class responsible for creating socket which enables physical connection with client
 class NetworkConnection:
     def __init__(self, ip_address):
         (self.connection, self.address) = (0, ip_address)
@@ -24,6 +25,7 @@ class NetworkConnection:
         self.connection.close()
 
 
+# Class responsible for creating a listening thread which continuously enables waiting for new messages
 class ListenningThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -43,4 +45,4 @@ class ListenningThread(threading.Thread):
             if not received_msg:
                 break
             else:
-                backend.handle_received_message(received_msg,self.address[0]) 
+                backend.handle_received_message(received_msg, self.address[0]) 
