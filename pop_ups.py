@@ -111,10 +111,10 @@ class ProgressBarFileSender(Widget):
 
 # Class responsible for displaying newly arrived message
 class NewMessage(Widget):
-    def __init__(self, msg):
+    def __init__(self, msg, address):
         print(msg)
         self.popup = Popup(
-            title = f'New message from {config.ADDRESS} has arrived!',
+            title = f'New message from {address} has arrived!',
             size_hint = (0.5, 0.4),
             content=Label(text=f'{msg}')
         )

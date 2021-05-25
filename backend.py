@@ -242,4 +242,4 @@ def handle_received_message(message, ip_address):
             decrypted_message_content = connection.decrypt_message(mode, encrypted_message_content, init_vector)
             # new message presenting
             print(decrypted_message_content)
-            pop_ups.NewMessage(msg=decrypted_message_content.decode("utf-8"))
+            pop_ups.NewMessage(msg=decrypted_message_content.decode("utf-8"), address=ip_address)

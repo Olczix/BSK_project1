@@ -28,7 +28,7 @@ def createAESCipherClass(mode, key, init_vector=None):
     if mode == 'CBC':
         mode = modes.CBC(init_vector)
     if mode == 'CFB':
-        mode = modes.CFB(init_vector)
+        mode = modes.CFB8(init_vector)
     if mode == 'OFB':
         mode = modes.OFB(init_vector)
     return Cipher_AES(key, mode)
