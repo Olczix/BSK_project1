@@ -95,11 +95,12 @@ def generate_session_key():
     bytes_list = []
     session_key = None
     session_key_len = 32
+    session_key_generation_time = 1
     mac_address = getmac.get_mac_address()
     mac_address_groups = re.findall('[0-9a-f][0-9a-f]', mac_address)
     counter = 0
     for _ in range(session_key_len):
-        time.sleep(5 / session_key_len)
+        time.sleep(session_key_generation_time / session_key_len)
         position = pyautogui.position()
         x = position.x if int(position.x) > 0 else -position.x
         y = position.y if int(position.y) > 0 else -position.y
@@ -113,7 +114,8 @@ def generate_session_key():
 
     if session_key is not None:
         # Send fake message to initialize connection
-        # send_message("Connection initialized", "ECB")
+        if not connection:
+            send_message("Connection initialized", "ECB")
         return pop_ups.PopUpMode.SUCCESS_SESSION_KEY
     else:
         return pop_ups.PopUpMode.ERROR_SESSION_KEY
@@ -241,5 +243,4 @@ def handle_received_message(message, ip_address):
         if connection:
             decrypted_message_content = connection.decrypt_message(mode, encrypted_message_content, init_vector)
             # new message presenting
-            print(decrypted_message_content)
             pop_ups.NewMessage(msg=decrypted_message_content.decode("utf-8"), address=ip_address)
