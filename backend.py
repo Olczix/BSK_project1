@@ -182,13 +182,33 @@ def init_file_sender(path, encryption_mode):
                                           init_vector=init_vector)
 
     # start sending chunks and displaying progress bar
-    pop_ups.ProgressBarFileSender(f=f, cryptor=e)
+    pop_ups.ProgressBarFileSender(f=f, cryptor=e, encryption_mode=encryption_mode,
+                                  init_vector=init_vector)
+
+
+def send_file_transfer_config(encryption_mode, init_vector, file):
+    print('Send file transfer configuration message')
+    """
+    Message should contain:
+        - message type = config.FILE_TRANSFER_CONFIGURATION
+        - encryption_mode
+        - init_vector
+        - number of file chunks
+        - file_extention
+        - file name (?) optional ? 
+    """
 
 
 # Handle sending a file chunk (for bigger files)
-def send_file_chunk(chunk, cryptor):
-    chunk_string = chunk.decode("utf-8")
-    encrypted_chunk = cryptor.encrypt_text(chunk_string.encode('utf-8'))
+def send_file_chunk(chunk, cryptor, if_first_chunk=False):
+    # TODO: Handle file chunk sending using our custom communication protocol
+    # message should containt:
+    #   - message type = config.FILE_CHUNK
+    #   - number of sent chunk
+    #   - actual file chunk body/content
+
+    file_chunk = chunk.decode("utf-8")
+    encrypted_chunk = cryptor.encrypt_text(file_chunk.encode('utf-8'))
     network_connection.NetworkConnection().send(encrypted_chunk)
 
 
@@ -196,6 +216,9 @@ def send_file_chunk(chunk, cryptor):
 def init_listening_thread():
     network_connection.ListenningThread().start()
 
+
+# File object containing file data and chunks we receive
+file_to_save = None
 
 # Decide what to do with received message
 # This function is called when a new message arrives
@@ -244,3 +267,20 @@ def handle_received_message(message, ip_address):
             decrypted_message_content = connection.decrypt_message(mode, encrypted_message_content, init_vector)
             # new message presenting
             pop_ups.NewMessage(msg=decrypted_message_content.decode("utf-8"), address=ip_address)
+
+    # TODO: Handle file_transfer_configuration message type
+    # if type == config.FILE_TRANSEF_CONFIGURATION:
+    #   file_extention = None               # file extention
+    # -> create empty file with given extention in current directory (ewentualnie zrobić nowy folder /IncommingFiles)
+    #   file_to_save = File()               # tutaj trzeba podać ścieżkę do utworzonego wyżej pliku
+    #   file_to_save.no_of_chunks = None    # tutaj ilość pakietów, którą odczytaliśmy z wiadomości
+    #   file_to_save.file_type = None       # tutaj file extention
+    # TODO: Add handling incoming files in GUI
+
+
+
+    # TODO: Handle next file chunks transition - we need to add them all together
+    # etc. in order to create a final file
+    # -> number of chunks is passed with FILE_TRANSEF_CONFIGURATION message type
+    # if type == config.FILE_CHUNK:
+    #   file_to_save.chunks.append() #tutaj dodajemy odkodowany odebrany chunk
