@@ -1,12 +1,16 @@
+from typing import Text
+from kivy.core import text
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.progressbar import ProgressBar
 from kivy.properties import ObjectProperty
+from kivy.uix.textinput import TextInput
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.clock import Clock
 import backend
-import config
 import enum
 
 
@@ -112,14 +116,46 @@ class ProgressBarFileSender(Widget):
 # Class responsible for displaying newly arrived message
 class NewMessage(Widget):
     def __init__(self, msg, address):
-        print(msg)
-        self.popup = Popup(
-            title = f'New message from {address} has arrived!',
-            size_hint = (0.5, 0.4),
-            content=Label(text=f'{msg}')
-        )
-        self.popup.open()
+        self.address = address
 
+        # New message popup setup = label with message + button to response
+        label = Label(text=msg, size_hint=(0.99, 0.8))
+        btn = Button(text="Send response now!", size_hint=(0.3, 0.15))
+        btn.bind(on_press=self.send_response_now)
+        box = BoxLayout(orientation='vertical', spacing=5)
+        box.add_widget(label)
+        box.add_widget(btn)
+
+        self.new_message = Popup(
+            title = f'New message from {self.address} has arrived!',
+            size_hint = (0.8, 0.8),
+            content=box
+        )
+        self.new_message.open()
+
+    
+    def send_response_now(self, event):
+        # Response popup setup = tex input + button to send response
+        self.text_input = TextInput(size_hint=(0.90, 0.8))
+        btn = Button(text="Send!", size_hint=(0.8, 0.15))
+        btn.bind(on_press=self.send_msg)
+        box = BoxLayout(orientation='vertical', spacing=5)
+        box.add_widget(self.text_input)
+        box.add_widget(btn)
+
+        self.new_message.dismiss()
+        self.send_response = Popup(
+            title = f'Sending response to {self.address}... (default ECB encoding)',
+            size_hint = (0.8, 0.8),
+            content=box
+        )
+        self.send_response.open()
+    
+    def send_msg(self, event):
+        backend.send_message(message=self.text_input.text, encryption_mode='CBC')
+        self.send_response.dismiss()
+        popUp(PopUpMode.SUCCESS_MESSAGE_SEND)
+    
 
 # Definition of pop up content (title and text)
 def popUp(mode, extra_info=None):
