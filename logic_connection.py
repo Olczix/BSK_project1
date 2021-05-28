@@ -66,19 +66,21 @@ class Logic_Connection:
     def send_file_transfer_config(self,mode, file):
         self.lock.acquire()
 
-        mode = mode.encode('utf-8')
+        
         extension = file.file_type.encode('utf-8')
         extension_len = str(len(extension)).encode('utf-8')
         number_of_chunks = str(file.no_of_chunks).encode('utf-8')
         message = extension_len + extension + number_of_chunks
         
-        if mode != b'ECB':
+        if mode != 'ECB':
             init_vector = os.urandom(16)
             file.set_init_vector(init_vector)
             encrypted_message = backend.current_user.encrypt_message(mode,message, init_vector)
+            mode = mode.encode('utf-8')
             whole_message = config.FILE_TRANSFER_CONFIGURATION + mode + init_vector + encrypted_message
         else:
             encrypted_message = backend.current_user.encrypt_message(mode,message, None)
+            mode = mode.encode('utf-8')
             whole_message = config.FILE_TRANSFER_CONFIGURATION + mode + encrypted_message
         self.sender.send(whole_message)
         

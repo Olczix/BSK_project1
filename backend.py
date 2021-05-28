@@ -168,10 +168,10 @@ class File():
     def set_encryption_mode(self, encryption_mode):
         self.encryption_mode = encryption_mode
 
-    def get_init_vector(self, init_vector):
+    def get_init_vector(self):
         return self.init_vector
 
-    def get_encryption_mode(self, encryption_mode):
+    def get_encryption_mode(self):
         return self.encryption_mode
 
     def set_chunks_number(self,number_of_chunks):
@@ -229,12 +229,12 @@ def send_file_chunk(chunk, file, chunk_number):
     #   - number of sent chunk
     #   - actual file chunk body/content
 
-    file_chunk = chunk.decode("utf-8")
+    #file_chunk = chunk.decode("latin_1")
     mode = file.get_encryption_mode()
     if mode != 'ECB': init_vector = file.get_init_vector()
     else: init_vector = None
 
-    connection.send_file_chunk(mode=mode, init_vector=init_vector, chunk=file_chunk, chunk_number=chunk_number)
+    connection.send_file_chunk(mode=mode, init_vector=init_vector, chunk=chunk, chunk_number=chunk_number)
 
 
 # Initialize thread for listening incomming messages 
@@ -247,7 +247,7 @@ file_to_save = None
 file_number = 0
 
 def init_received_file(file_name, extension, number_of_chunks, mode, init_vector=None):
-    file = file_name + '.' + extension
+    file = file_name + '.' + extension.decode('utf-8')
     path = os.path.join(config.RECEIVED_FILE_DIR, file)
     file_manager.write_to_file(path, b'')
     global file_to_save
@@ -313,6 +313,7 @@ def handle_received_message(message, ip_address):
         else:
             init_vector = None
             encrypted_message_content = content[3:]
+        mode = mode.decode('utf-8')
         decrypted_message_content = connection.decrypt_message(mode, encrypted_message_content, init_vector)
         extension_len = int(decrypted_message_content[0:1])
         extension = decrypted_message_content[1:(1 + extension_len)]

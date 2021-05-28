@@ -1,5 +1,5 @@
 # Connection configuration
-HOST = '192.168.31.245'     # our IP address
+HOST = '192.168.31.243'     # our IP address
 ADDRESS = None              # IP address typed by user
 PORT = 64623                # mutual port
 
@@ -14,4 +14,4 @@ RECEIVED_FILE_DIR = ".//received_files"
 
 
 # Size of package/file chunk
-PACKAGE_SIZE = 10240
+PACKAGE_SIZE = 1024
