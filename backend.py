@@ -184,7 +184,6 @@ class File():
     def add_binary_content(self, content):
         with open(self.path, 'ab') as f:
             f.write(content)
-        read_binary_content(self)
 
     def divide_file_into_chunks(self):
         # big files handling + there is a need to cut it in smaller pieces
@@ -332,7 +331,6 @@ def handle_received_message(message, ip_address):
         chunk_number = int(decrypted_message[1:(1+chunk_number_length)])
         chunk = decrypted_message[(1+chunk_number_length):]
         file_to_save.add_binary_content(chunk)
-
 
     # TODO: Handle file_transfer_configuration message type
     # if type == config.FILE_TRANSEF_CONFIGURATION:
