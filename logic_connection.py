@@ -62,3 +62,42 @@ class Logic_Connection:
             whole_message = config.JUST_TALK_TYPE + mode + encrypted_message
         self.sender.send(whole_message)
         self.lock.release()
+
+    def send_file_transfer_config(self,mode, file):
+        self.lock.acquire()
+
+        mode = mode.encode('utf-8')
+        extension = file.file_type.encode('utf-8')
+        extension_len = str(len(extension)).encode('utf-8')
+        number_of_chunks = str(file.no_of_chunks).encode('utf-8')
+        message = extension_len + extension + number_of_chunks
+        
+        if mode != b'ECB':
+            init_vector = os.urandom(16)
+            file.set_init_vector(init_vector)
+            encrypted_message = backend.current_user.encrypt_message(mode,message, init_vector)
+            whole_message = config.FILE_TRANSFER_CONFIGURATION + mode + init_vector + encrypted_message
+        else:
+            encrypted_message = backend.current_user.encrypt_message(mode,message, None)
+            whole_message = config.FILE_TRANSFER_CONFIGURATION + mode + encrypted_message
+        self.sender.send(whole_message)
+        
+        self.lock.release()
+
+    def send_file_chunk(self, mode, init_vector, chunk, chunk_number):
+        self.lock.acquire()
+
+        # length of chunk_number ready to be sent
+        chunk_number_length = str(len(str(chunk_number))).encode('utf-8')
+
+        # chunk number ready to be sent
+        chunk_number_to_send = str(chunk_number).encode('utf-8')
+
+        message = chunk_number_length + chunk_number_to_send + chunk
+        encrypted_message = backend.current_user.encrypt_message(mode,message, init_vector)
+
+        whole_message = config.FILE_CHUNK + encrypted_message
+
+        self.sender.send(whole_message)
+
+        self.lock.release()

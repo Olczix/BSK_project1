@@ -10,6 +10,7 @@ SESSION_KEY_TYPE = b'2'
 JUST_TALK_TYPE = b'3'
 FILE_TRANSFER_CONFIGURATION = b'4'
 FILE_CHUNK = b'5'
+RECEIVED_FILE_DIR = ".//received_files"
 
 
 # Size of package/file chunk
