@@ -8,6 +8,8 @@ PORT = 64623                # mutual port
 PUBLIC_KEY_TYPE = b'1'
 SESSION_KEY_TYPE = b'2'
 JUST_TALK_TYPE = b'3'
+FILE_TRANSFER_CONFIGURATION = b'4'
+FILE_CHUNK = b'5'
 
 
 # Size of package/file chunk
