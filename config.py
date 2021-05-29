@@ -13,5 +13,5 @@ FILE_CHUNK = b'5'
 RECEIVED_FILE_DIR = ".//received_files"
 
 
-# Size of package/file chunk
-PACKAGE_SIZE = 10240
+# Size of package/file chunk (100kB)
+PACKAGE_SIZE = 102400
