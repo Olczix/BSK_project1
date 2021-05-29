@@ -12,6 +12,7 @@ import getmac
 import time
 import re
 import os
+import file_manager
 
 
 # Getting 'database' of users
@@ -19,6 +20,7 @@ users_data_path = 'users.csv'
 if not os.path.exists(users_data_path): 
     df = pd.DataFrame(columns=['Login', 'Password'])
     df.to_csv(users_data_path, index=False)
+file_manager.create_dir(config.RECEIVED_FILE_DIR)
 users_frame = pd.read_csv(users_data_path, usecols=['Login','Password'])
 users_list = list(users_frame['Login'])
 pwds_list = list(users_frame['Password'])
@@ -113,9 +115,11 @@ def generate_session_key():
     current_user.set_session_key(session_key)
 
     if session_key is not None:
-        # Send fake message to initialize connection
-        if not connection:
-            send_message("Connection initialized", "ECB")
+        # Initialize connection
+        global connection
+        if connection is None:
+            connection = logic_connection.Logic_Connection(config.ADDRESS)
+            connection.send_my_public_key()
         return pop_ups.PopUpMode.SUCCESS_SESSION_KEY
     else:
         return pop_ups.PopUpMode.ERROR_SESSION_KEY
@@ -143,7 +147,7 @@ def validate_file_sending(path, mode):
 
 # Class representing a file object
 class File():
-    def __init__(self, path):
+    def __init__(self, path, is_to_save=False):
         self.path = path
         self.file_content = None
         self.file_type = self.path.split('.')[-1]
@@ -151,13 +155,35 @@ class File():
         self.no_of_packets = self.file_size_in_bytes/config.PACKAGE_SIZE
         self.chunks = None
         self.no_of_chunks = None
+        self.encryption_mode = None
+        self.init_vector = None
 
-        self.read_binary_content()
-        self.divide_file_into_chunks()
+        if is_to_save == False:
+            self.read_binary_content()
+            self.divide_file_into_chunks()
+
+    def set_init_vector(self, init_vector):
+        self.init_vector = init_vector
+
+    def set_encryption_mode(self, encryption_mode):
+        self.encryption_mode = encryption_mode
+
+    def get_init_vector(self):
+        return self.init_vector
+
+    def get_encryption_mode(self):
+        return self.encryption_mode
+
+    def set_chunks_number(self,number_of_chunks):
+        self.no_of_chunks = number_of_chunks
 
     def read_binary_content(self):
         with open(self.path, 'rb') as f:
             self.file_content = f.read()
+
+    def add_binary_content(self, content):
+        with open(self.path, 'ab') as f:
+            f.write(content)
 
     def divide_file_into_chunks(self):
         # big files handling + there is a need to cut it in smaller pieces
@@ -173,43 +199,41 @@ class File():
 # Initialization of file sender (with progress bar)
 def init_file_sender(path, encryption_mode):
     f = File(path=path)
-
-    # prepare cryptor for message encyption
-    init_vector = os.urandom(16) if encryption_mode != 'ECB' else None
-    current_user.set_used_init_vector(init_vector=init_vector)
-    e = crypto_stuff.createAESCipherClass(mode=encryption_mode,
-                                          key=current_user.get_session_key(),
-                                          init_vector=init_vector)
-
+    f.set_encryption_mode(encryption_mode)
     # start sending chunks and displaying progress bar
-    pop_ups.ProgressBarFileSender(f=f, cryptor=e, encryption_mode=encryption_mode,
-                                  init_vector=init_vector)
+    pop_ups.ProgressBarFileSender(f=f, encryption_mode=encryption_mode)
 
 
-def send_file_transfer_config(encryption_mode, init_vector, file):
+def send_file_transfer_config(encryption_mode, file):
     print('Send file transfer configuration message')
+    connection.send_file_transfer_config(mode = encryption_mode,file = file)
+
     """
-    Message should contain:
+    Message  contains:
         - message type = config.FILE_TRANSFER_CONFIGURATION
         - encryption_mode
         - init_vector
-        - number of file chunks
+        - extension length
         - file_extention
-        - file name (?) optional ? 
+        - number of file chunks
     """
 
 
 # Handle sending a file chunk (for bigger files)
-def send_file_chunk(chunk, cryptor, if_first_chunk=False):
-    # TODO: Handle file chunk sending using our custom communication protocol
-    # message should containt:
+def send_file_chunk(chunk, file, chunk_number):
+    # Handle file chunk sending using our custom communication protocol
+    # message contains:
     #   - message type = config.FILE_CHUNK
+    #   - length of chunk number
     #   - number of sent chunk
     #   - actual file chunk body/content
 
-    file_chunk = chunk.decode("utf-8")
-    encrypted_chunk = cryptor.encrypt_text(file_chunk.encode('utf-8'))
-    network_connection.NetworkConnection().send(encrypted_chunk)
+    #file_chunk = chunk.decode("latin_1")
+    mode = file.get_encryption_mode()
+    if mode != 'ECB': init_vector = file.get_init_vector()
+    else: init_vector = None
+
+    connection.send_file_chunk(mode=mode, init_vector=init_vector, chunk=chunk, chunk_number=chunk_number)
 
 
 # Initialize thread for listening incomming messages 
@@ -219,6 +243,18 @@ def init_listening_thread():
 
 # File object containing file data and chunks we receive
 file_to_save = None
+file_number = 0
+
+def init_received_file(file_name, extension, number_of_chunks, mode, init_vector=None):
+    file = file_name + '.' + extension.decode('utf-8')
+    path = os.path.join(config.RECEIVED_FILE_DIR, file)
+    file_manager.write_to_file(path, b'')
+    global file_to_save
+    file_to_save = File(path, is_to_save=True)
+    file_to_save.set_encryption_mode(mode)
+    file_to_save.set_chunks_number(number_of_chunks)
+    if mode != b'ECB':
+        file_to_save.set_init_vector(init_vector)
 
 # Decide what to do with received message
 # This function is called when a new message arrives
@@ -267,6 +303,34 @@ def handle_received_message(message, ip_address):
             decrypted_message_content = connection.decrypt_message(mode, encrypted_message_content, init_vector)
             # new message presenting
             pop_ups.NewMessage(msg=decrypted_message_content.decode("utf-8"), address=ip_address)
+
+    if type == config.FILE_TRANSFER_CONFIGURATION:
+        mode = content[0:3]
+        if mode != b'ECB':
+            init_vector = content[3:19]
+            encrypted_message_content = content[19:]
+        else:
+            init_vector = None
+            encrypted_message_content = content[3:]
+        mode = mode.decode('utf-8')
+        decrypted_message_content = connection.decrypt_message(mode, encrypted_message_content, init_vector)
+        extension_len = int(decrypted_message_content[0:1])
+        extension = decrypted_message_content[1:(1 + extension_len)]
+        number_of_chunks = int(decrypted_message_content[(1 + extension_len):])
+        global file_number
+        file_number += 1
+        #TODO handle receving file via gui
+        #Consider asking user for file name - first argument
+        init_received_file(ip_address + '_' + str(file_number),extension, number_of_chunks, mode, init_vector)
+
+    if type == config.FILE_CHUNK:
+        mode = file_to_save.get_encryption_mode()
+        init_vector = file_to_save.get_init_vector()
+        decrypted_message = connection.decrypt_message(mode, content, init_vector)
+        chunk_number_length = int(decrypted_message[0:1])
+        chunk_number = int(decrypted_message[1:(1+chunk_number_length)])
+        chunk = decrypted_message[(1+chunk_number_length):]
+        file_to_save.add_binary_content(chunk)
 
     # TODO: Handle file_transfer_configuration message type
     # if type == config.FILE_TRANSEF_CONFIGURATION:

@@ -82,15 +82,12 @@ class errorIncorrectIpAddressFormat(FloatLayout):
 class ProgressBarFileSender(Widget):
     progress_bar = ObjectProperty()
      
-    def __init__(self, f, cryptor, encryption_mode, init_vector):
+    def __init__(self, f, encryption_mode):
         self.file = f
-        self.cryptor = cryptor
         self.encryption_mode = encryption_mode
-        self.init_vector = init_vector
 
         # send FILE_TRANSFER_CONFIGURATION message
         backend.send_file_transfer_config(encryption_mode=self.encryption_mode,
-                                          init_vector=self.init_vector,
                                           file=self.file)
 
         self.iterator = 0
@@ -110,8 +107,7 @@ class ProgressBarFileSender(Widget):
     def next(self, dt):
         # send each file chunk using our custom communication protocol
         if self.iterator < self.file.no_of_chunks:
-            backend.send_file_chunk(chunk=self.file.chunks[self.iterator],
-                                    cryptor=self.cryptor)
+            backend.send_file_chunk(chunk=self.file.chunks[self.iterator], file=self.file, chunk_number=self.iterator)
             print(f'chunk id = {self.iterator} out of {self.file.no_of_chunks}')
             self.iterator += 1
             self.progress_bar.value += self.percentage_interval
