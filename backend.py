@@ -266,7 +266,6 @@ def change_file_name(new_name, extension):
     old_file_location = f'{os.getcwd()}/{config.RECEIVED_FILE_DIR[3:]}/{old_name}.{extension}'
     new_file_location = f'{os.getcwd()}/{config.RECEIVED_FILE_DIR[3:]}/{new_name}.{extension}'
     os.rename(old_file_location, new_file_location)
-    pop_ups.Popup(pop_ups.PopUpMode.SUCCESS)
 
 
 # Decide what to do with received message
