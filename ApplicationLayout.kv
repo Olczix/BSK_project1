@@ -80,11 +80,18 @@ ScreenManager:
             password: True
             multiline : False
             size_hint : 0.3, 0.1
-            pos_hint : {"x" : 0.45, "top" : 0.5} 
+            pos_hint : {"x" : 0.45, "top" : 0.5}
+        Button: 
+            text : "BACK"
+            size_hint : 0.3, 0.1
+            pos_hint : {"x" : 0.15, "top" : 0.28} 
+            on_press :
+                app.root.current = 'login_screen'
+                root.manager.transition.direction = "right"
         Button: 
             text : "SUBMIT"
             size_hint : 0.3, 0.1
-            pos_hint : {"x" : 0.39, "top" : 0.28} 
+            pos_hint : {"x" : 0.55, "top" : 0.28} 
             on_press : 
                 root.create_account_btn_clicked()
                 root.manager.transition.direction = "right"
@@ -341,5 +348,11 @@ ScreenManager:
 <errorIncorrectIpAddressFormat>:
     Label:
         text : "Incorrect IP address.\n\n Correct format is: xxx.xxx.xxx.xxx\nwhere x is a digit"
+        size_hint : 0.1, 0.1
+        pos_hint : {"x" : 0.3, "top" : 0.5}
+
+<successConnection>:
+    Label:
+        text : "Successfully connected with client :)"
         size_hint : 0.1, 0.1
         pos_hint : {"x" : 0.3, "top" : 0.5}

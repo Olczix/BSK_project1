@@ -40,7 +40,7 @@ class ListenningThread(threading.Thread):
         while True:
             self.connection, self.address = listening_socket.accept()
             print(f'Connected with {self.address[0]}')
-            received_msg = self.connection.recv(config.PACKAGE_SIZE)
+            received_msg = self.connection.recv(config.PACKAGE_SIZE + 128)
             if not received_msg:
                 break
             else:
