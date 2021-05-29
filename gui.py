@@ -87,7 +87,6 @@ class sessionInitializationScreen(Screen):
 
     def save_ip_addres(self):
         if backend.validate_ip_address(self.ip_address.text):
-            print(backend.have_to_generate_session_key)
             if backend.have_to_generate_session_key is True:
                 screen_manager.current = 'session_key_generator_screen'
             else:

@@ -15,6 +15,8 @@ import backend
 import enum
 
 
+TIME_INTERVAL = 0.5
+
 # Possible pop ups types/modes
 class PopUpMode(enum.Enum):
     ERROR_INVALID_INFORMATION = 0
@@ -120,7 +122,7 @@ class ProgressBarFileSender(Widget):
             self.popup.dismiss()
 
     def puopen(self, instance):
-        Clock.schedule_interval(self.next, 1)
+        Clock.schedule_interval(self.next, TIME_INTERVAL)
 
 
 # Class responsible for displaying newly arrived message
@@ -185,7 +187,7 @@ class NewFileArrival(Widget):
             content=box
         )
         new_file_arrival.open()
-        sleep(1)
+        sleep(TIME_INTERVAL)
         new_file_arrival.dismiss()
 
         if all_chunks == current_chunk_number:

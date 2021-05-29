@@ -292,7 +292,7 @@ def handle_received_message(message, ip_address):
         connection.send_encrypted_session_key()
         connection.allow_communication()
         pop_ups.popUp(pop_ups.PopUpMode.SUCCESS_CONNECTTION)
-        print("Communication Allowed - public key type")
+        print("Communication Allowed")
 
     # we received session key from another user
     # it is encrypted with our public key
@@ -301,10 +301,9 @@ def handle_received_message(message, ip_address):
         # we set session key and now communication is allowed
         global have_to_generate_session_key
         have_to_generate_session_key = False
-        print(have_to_generate_session_key)
         connection.set_session_key(content)
         connection.allow_communication()
-        print("Communication Allowed - session key type")
+        print("Communication Allowed")
         
 
     # normal communication case
