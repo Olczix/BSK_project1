@@ -100,7 +100,7 @@ def generate_session_key():
     bytes_list = []
     session_key = None
     session_key_len = 32
-    session_key_generation_time = 1
+    session_key_generation_time = 5
     mac_address = getmac.get_mac_address()
     mac_address_groups = re.findall('[0-9a-f][0-9a-f]', mac_address)
     counter = 0
