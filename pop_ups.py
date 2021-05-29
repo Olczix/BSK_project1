@@ -10,6 +10,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.clock import Clock
+from time import sleep
 import backend
 import enum
 
@@ -31,6 +32,7 @@ class PopUpMode(enum.Enum):
     SUCCESS_FILE_SEND = 12
     NO_SESSION_KEY_GENERATED = 13
     ERROR_INCORRECT_IP_ADDRESS_FORMAT = 14
+    SUCCESS_CONNECTTION = 15
 
 # Classes implementing particular errors/infos
 class errorInvalidInformation(FloatLayout): 
@@ -78,6 +80,9 @@ class noSessionKeyGenerated(FloatLayout):
 class errorIncorrectIpAddressFormat(FloatLayout):
     pass
 
+class successConnection(FloatLayout):
+    pass
+
 # Class responsible for displaying progress bar while sending large files
 class ProgressBarFileSender(Widget):
     progress_bar = ObjectProperty()
@@ -108,7 +113,7 @@ class ProgressBarFileSender(Widget):
         # send each file chunk using our custom communication protocol
         if self.iterator < self.file.no_of_chunks:
             backend.send_file_chunk(chunk=self.file.chunks[self.iterator], file=self.file, chunk_number=self.iterator)
-            print(f'chunk id = {self.iterator} out of {self.file.no_of_chunks}')
+            print(f'chunk id = {self.iterator + 1} out of {self.file.no_of_chunks}')
             self.iterator += 1
             self.progress_bar.value += self.percentage_interval
         else:
@@ -162,6 +167,59 @@ class NewMessage(Widget):
         popUp(PopUpMode.SUCCESS_MESSAGE_SEND)
     
 
+# Class responsible for informing user about receiving new file from another user
+class NewFileArrival(Widget):
+    def __init__(self, address, number, extention):
+
+        all_chunks = backend.file_to_save.no_of_chunks
+        current_chunk_number = number + 1
+        label = Label(text=f'Receiving file packages: {current_chunk_number} out of {all_chunks}',
+                      size_hint=(0.99, 0.4))
+        box = BoxLayout(orientation='vertical', spacing=5)
+        box.add_widget(label)
+        new_file_arrival = Popup(
+            title = f'File from {address} transfer progress ...',
+            size_hint = (0.5, 0.2),
+            pos_hint={'x': 0.5, 
+                      'y': 0.0},
+            content=box
+        )
+        new_file_arrival.open()
+        sleep(1)
+        new_file_arrival.dismiss()
+
+        if all_chunks == current_chunk_number:
+            NameForNewFile(extention)
+
+
+# Class responsible for asking user for naming a newly received file
+class NameForNewFile(Widget):
+    def __init__(self, extension):
+        self.extension = extension
+        
+        # popup setup = label asking for typing name + text input + button to set name
+        self.label = Label(text=f'Type a name for file (.{extension}):',
+                      size_hint=(0.99, 0.4))
+        self.text_input = TextInput(size_hint=(0.99, 0.4))
+        self.btn = Button(text="Set file name", size_hint=(0.3, 0.15))
+        self.btn.bind(on_press=self.set_file_name)
+        box = BoxLayout(orientation='vertical', spacing=5)
+        box.add_widget(self.label)
+        box.add_widget(self.text_input)
+        box.add_widget(self.btn)
+
+        self.new_file_name = Popup(
+            title = f'You can change name of file which has just arrived!',
+            size_hint = (0.45, 0.35),
+            content=box
+        )
+        self.new_file_name.open()
+    
+    # Set file name and save empty file with given name and extension
+    def set_file_name(self, event):
+        backend.change_file_name(self.text_input.text, extension=self.extension)     
+
+
 # Definition of pop up content (title and text)
 def popUp(mode, extra_info=None):
     show = None
@@ -211,6 +269,9 @@ def popUp(mode, extra_info=None):
     elif mode.value == 14:
         info = 'ERROR'
         show = errorIncorrectIpAddressFormat()
+    elif mode.value == 15:
+        info = 'INFO'
+        show = successConnection()
     
     window = Popup(title = info, content = show,
                    size_hint = (0.5, 0.4)) 

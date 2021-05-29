@@ -1,5 +1,5 @@
 # Connection configuration
-HOST = '192.168.31.243'     # our IP address
+HOST = '192.168.0.10'       # our IP address
 ADDRESS = None              # IP address typed by user
 PORT = 64623                # mutual port
 

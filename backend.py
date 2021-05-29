@@ -1,9 +1,10 @@
 from plyer import filechooser
-import crypto_stuff
-import pandas as pd
 from pathlib import Path
-import logic_connection
 import network_connection
+import logic_connection
+import pandas as pd
+import crypto_stuff
+import file_manager
 import pyautogui
 import pop_ups
 import config
@@ -12,7 +13,6 @@ import getmac
 import time
 import re
 import os
-import file_manager
 
 
 # Getting 'database' of users
@@ -24,8 +24,11 @@ file_manager.create_dir(config.RECEIVED_FILE_DIR)
 users_frame = pd.read_csv(users_data_path, usecols=['Login','Password'])
 users_list = list(users_frame['Login'])
 pwds_list = list(users_frame['Password'])
+
+# Additional global variables
 current_user = None
 connection = None
+have_to_generate_session_key = True
 
 
 # Validate login and check if user is in database
@@ -204,19 +207,17 @@ def init_file_sender(path, encryption_mode):
     pop_ups.ProgressBarFileSender(f=f, encryption_mode=encryption_mode)
 
 
+# Sending file transfer configuration message/package
 def send_file_transfer_config(encryption_mode, file):
-    print('Send file transfer configuration message')
+    # Message contains:
+    #    - message type = config.FILE_TRANSFER_CONFIGURATION
+    #    - encryption_mode
+    #    - init_vector
+    #    - extension length
+    #    - file_extention
+    #    - number of file chunks
+    print('Sending file transfer configuration message')
     connection.send_file_transfer_config(mode = encryption_mode,file = file)
-
-    """
-    Message  contains:
-        - message type = config.FILE_TRANSFER_CONFIGURATION
-        - encryption_mode
-        - init_vector
-        - extension length
-        - file_extention
-        - number of file chunks
-    """
 
 
 # Handle sending a file chunk (for bigger files)
@@ -228,7 +229,6 @@ def send_file_chunk(chunk, file, chunk_number):
     #   - number of sent chunk
     #   - actual file chunk body/content
 
-    #file_chunk = chunk.decode("latin_1")
     mode = file.get_encryption_mode()
     if mode != 'ECB': init_vector = file.get_init_vector()
     else: init_vector = None
@@ -245,6 +245,8 @@ def init_listening_thread():
 file_to_save = None
 file_number = 0
 
+
+# Initialize empty file for an arriving file 
 def init_received_file(file_name, extension, number_of_chunks, mode, init_vector=None):
     file = file_name + '.' + extension.decode('utf-8')
     path = os.path.join(config.RECEIVED_FILE_DIR, file)
@@ -255,6 +257,17 @@ def init_received_file(file_name, extension, number_of_chunks, mode, init_vector
     file_to_save.set_chunks_number(number_of_chunks)
     if mode != b'ECB':
         file_to_save.set_init_vector(init_vector)
+
+
+# Change name of file which had just arrived
+def change_file_name(new_name, extension):
+    global file_number
+    old_name = config.ADDRESS + '_' + str(file_number)
+    old_file_location = f'{os.getcwd()}/{config.RECEIVED_FILE_DIR[3:]}/{old_name}.{extension}'
+    new_file_location = f'{os.getcwd()}/{config.RECEIVED_FILE_DIR[3:]}/{new_name}.{extension}'
+    os.rename(old_file_location, new_file_location)
+    pop_ups.Popup(pop_ups.PopUpMode.SUCCESS)
+
 
 # Decide what to do with received message
 # This function is called when a new message arrives
@@ -278,16 +291,21 @@ def handle_received_message(message, ip_address):
         # we send previously generated session key
         connection.send_encrypted_session_key()
         connection.allow_communication()
-        print("Communication Allowed")
+        pop_ups.popUp(pop_ups.PopUpMode.SUCCESS_CONNECTTION)
+        print("Communication Allowed - public key type")
 
     # we received session key from another user
     # it is encrypted with our public key
     # connection object should be already created at this point
     if type == config.SESSION_KEY_TYPE:
         # we set session key and now communication is allowed
+        global have_to_generate_session_key
+        have_to_generate_session_key = False
+        print(have_to_generate_session_key)
         connection.set_session_key(content)
         connection.allow_communication()
-        print("Communication Allowed")
+        print("Communication Allowed - session key type")
+        
 
     # normal communication case
     if type == config.JUST_TALK_TYPE:
@@ -304,6 +322,7 @@ def handle_received_message(message, ip_address):
             # new message presenting
             pop_ups.NewMessage(msg=decrypted_message_content.decode("utf-8"), address=ip_address)
 
+    # handle file transfer message
     if type == config.FILE_TRANSFER_CONFIGURATION:
         mode = content[0:3]
         if mode != b'ECB':
@@ -319,10 +338,9 @@ def handle_received_message(message, ip_address):
         number_of_chunks = int(decrypted_message_content[(1 + extension_len):])
         global file_number
         file_number += 1
-        #TODO handle receving file via gui
-        #Consider asking user for file name - first argument
-        init_received_file(ip_address + '_' + str(file_number),extension, number_of_chunks, mode, init_vector)
+        init_received_file(ip_address + '_' + str(file_number), extension,  number_of_chunks, mode, init_vector)  
 
+    # handle arriving file chunks
     if type == config.FILE_CHUNK:
         mode = file_to_save.get_encryption_mode()
         init_vector = file_to_save.get_init_vector()
@@ -331,20 +349,4 @@ def handle_received_message(message, ip_address):
         chunk_number = int(decrypted_message[1:(1+chunk_number_length)])
         chunk = decrypted_message[(1+chunk_number_length):]
         file_to_save.add_binary_content(chunk)
-
-    # TODO: Handle file_transfer_configuration message type
-    # if type == config.FILE_TRANSEF_CONFIGURATION:
-    #   file_extention = None               # file extention
-    # -> create empty file with given extention in current directory (ewentualnie zrobić nowy folder /IncommingFiles)
-    #   file_to_save = File()               # tutaj trzeba podać ścieżkę do utworzonego wyżej pliku
-    #   file_to_save.no_of_chunks = None    # tutaj ilość pakietów, którą odczytaliśmy z wiadomości
-    #   file_to_save.file_type = None       # tutaj file extention
-    # TODO: Add handling incoming files in GUI
-
-
-
-    # TODO: Handle next file chunks transition - we need to add them all together
-    # etc. in order to create a final file
-    # -> number of chunks is passed with FILE_TRANSEF_CONFIGURATION message type
-    # if type == config.FILE_CHUNK:
-    #   file_to_save.chunks.append() #tutaj dodajemy odkodowany odebrany chunk
+        pop_ups.NewFileArrival(config.ADDRESS, chunk_number, file_to_save.file_type)
