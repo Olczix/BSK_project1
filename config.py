@@ -14,4 +14,4 @@ RECEIVED_FILE_DIR = ".//received_files"
 
 
 # Size of package/file chunk (10 kB)
-PACKAGE_SIZE = 10240
+PACKAGE_SIZE = 4096
